@@ -1,6 +1,6 @@
 # Programming with S.I.M.P.L.E.
 
-S.I.M.P.L.E. programs are written in `.simple` [files](#File) and then executed from terminal/console (see [usage.md](usage.md)).
+S.I.M.P.L.E. programs are written in `.simple` [files](#File) and then executed from terminal (see [usage.md](usage.md)).
 
 Start learning from [here](#File) or go to the [index](#Index).
 
@@ -27,13 +27,13 @@ Syntax: `Set `_X_` to value of `_Y_.
 _X_ can be:
 - The [name](#Name) of a variable.
 - [Access](#Structure-access) to part of a structured variable.
-- `Output`, to show the value of _Y_ on console.
+- `Output`, to show the value of _Y_ on terminal.
 
 _Y_ can be:
-- A [direct](#Direct-value) or [special](#Special-value).
+- A [direct](#Direct-value) or [special](#Special-value) value.
 - An [arithmetical](#Arithmetical-operation), [logical](#Logical-operation) or [comparison](#Comparison-operation) operation.
 - A [call](#Function-call) to a function, between `()`.
-- `Input`, to get the value from console.
+- `Input`, to get the value from terminal.
 
 ### Comment
 A single line of text starting and ending with `%%`.
@@ -135,7 +135,7 @@ Syntax: `Repeat `_X_`:`, followed by a newline and a [scope](#Scope).
 
 _X_ can be:
 - _Y_` times`, where _Y_ is a [direct](#Direct-value) value, for quantified iterations.
-- `while `_K_, where _K_ is a [comparison](#Comparison-operation) or [logical](#logical-operation) operation, for conditional iterations.
+- `while `_K_, where _K_ is a [comparison](#Comparison-operation) or [logical](#Logical-operation) operation, for conditional iterations.
 
 ### Main
 This function is the starting point for the program when it's executed.  
@@ -153,14 +153,14 @@ _X_ can be:
 - A [call](#Function-call) to a function, between `()`.
 
 ### Scope
-A scope contains a one or more:
+A scope contains one or more:
 - [Comments](#Comment).
 - [Instructions](#Instruction), each terminated by `,`.
 - [Conditional](#Conditional-statement) statements.
 - [Loop](#Loop-statement) statements.
 
 The last element of the scope is terminated by `;`.  
-Only one `;` is needed if multiple scopes end on the same line, none if the function also ends there.  
+Only one `;` is needed if multiple scopes end on the same line.  
 The last element cannot be a comment but can be a [return](#Return).  
 If a scope is contained in another scope, all its elements are indented with **one** more tabulation than those of the other, starting from 1.  
 E.g.
@@ -240,4 +240,5 @@ Can be followed by ` and value of ` and either a [direct](#Direct-value) or [spe
 - [Structure access](#Structure-access)
 - [Type](#Type)
 - [Type declaration](#Type-declaration)
+
 - [Variable declaration](#Variable-declaration)
