@@ -1,0 +1,5 @@
+%%This program says "Hello, World!"%%
+
+Define a procedure with name Main:
+	Set Output to value of "Hello, World!",
+	Return Nothing.

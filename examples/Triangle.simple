@@ -1,0 +1,21 @@
+%%This is a test program that prints a triangle of asterisks%%
+
+Prepare a Text with name SYM and value of "*".
+
+Prepare a Number with name N.
+
+Define a procedure with name Main:
+	Set Output to value of "Input the triangle's height.\n",
+	Set N to value of Input,
+	Prepare a Number with name PADDING,
+	Set PADDING to value of (N - 1),
+	Repeat N times:
+		Repeat PADDING times:
+			Set Output to value of " ";
+		Prepare a Number with name LEV,
+		Set LEV to value of ((Counter * 2) - 1),
+		Repeat LEV times:
+			Set Output to value of SYM;
+		Set Output to value of "\n",
+		Set PADDING to value of (PADDING - 1);
+	Return Nothing.

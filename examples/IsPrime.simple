@@ -1,0 +1,37 @@
+%%This program tests whether a number is prime%%
+
+Prepare a (List of Number) with name MEMO_PRIMES and value of |2; 3; 5; 7; 11; 13; 17; 19|.
+
+Define a procedure with name Main:
+	Set Output to value of "Enter a number:\n",
+	Prepare a Number with name INPUT,
+	Set INPUT to value of Input,
+	Prepare a Boolean with name IS_PRIME,
+	Set IS_PRIME to value of (Execute procedure PRIME_TEST with INPUT),
+	Set Output to value of INPUT,
+	Set Output to value of " is",
+	If (not IS_PRIME) then:
+		Set Output to value of " not";
+	Set Output to value of " a prime number.\n",
+	Return Nothing.
+
+Define a procedure with name PRIME_TEST that produces a Boolean using Number X:
+	Prepare a Number with name SIZE and value of size of MEMO_PRIMES,
+	%%Check if it has a divisor among the memoized primes%%
+	Repeat SIZE times:
+		If ((X mod MEMO_PRIMES at position Counter) = 0) then:
+			Return False;
+	Prepare a Number with name CURR,
+	Set CURR to value of (MEMO_PRIMES at position SIZE + 1),
+	%%Check every number until the square root of X%%
+	Repeat while (not ((CURR * CURR) > X)):
+		Prepare a Boolean with name IS_PRIME,
+		Set IS_PRIME to value of (Execute procedure PRIME_TEST with CURR),
+		If (IS_PRIME = True) then:
+			%%Memoize the newfound prime number%%
+			Set SIZE to value of (SIZE + 1),
+			Insert CURR in MEMO_PRIMES at position SIZE,
+			If ((X mod CURR) = 0) then:
+				Return False;
+		Set CURR to value of (CURR + 1);
+	Return True.

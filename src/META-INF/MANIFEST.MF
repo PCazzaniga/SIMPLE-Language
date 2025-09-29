@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Main-Class: simpleInterpreter
+Class-Path: antlr-runtime-4.13.2.jar
+
