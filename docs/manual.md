@@ -240,5 +240,5 @@ Can be followed by ` and value of ` and either a [direct](#Direct-value) or [spe
 - [Structure access](#Structure-access)
 - [Type](#Type)
 - [Type declaration](#Type-declaration)
-
 - [Variable declaration](#Variable-declaration)
+
