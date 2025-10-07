@@ -22,6 +22,18 @@ Example:
    Hello, World!
    >
     ```
-You can enter `simplexe -h` in the terminal to see all the options for the command.
 
 [^note]: Make sure the tabulation characters `    ` are not replaced with multiple spaces ` ` ` ` ` ` ` `.
+
+## Command options
+
+The `simplexe` command has several options that can be entered alongside it, after the file name:
+- `--help` Prints a helper message that briefly describes the command and its options.
+- `--args` To pass anything after it as arguments for the [Main](manual.md#main) function of the program.
+- `--execute` To execute the .simple file after its validation.
+- `--loop` To set the maximum times conditional [loops](manual.md#loop-statement) can iterate. Default is 100.
+- `--recursion` To set the maximum times functions can be [called](manual.md#function-call) concurrently. Default is 100.
+
+All options have both longhand and shorthand versions, e.g. `--help` can also be used as `-h`.  
+Order of options doesn't matter except for `--args` which if present must, obviously, be last.  
+`--args`, `--loop` and `--recursion` require to be followed immediately by opportune values. 
