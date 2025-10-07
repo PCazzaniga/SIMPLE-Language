@@ -50,6 +50,10 @@ class errorRuntimeMsg {
 				". If this is not user error then program may be broken.";
 	}
 
+	public static String loopNegative(int limit) {
+		return prefix + "Attempting to execute quantified loop using negative value " + limit + ".";
+	}
+
 	public static String loopOverLimit(int maxLoop) {
 		return prefix + "Attempting to execute conditional loop over iteration limit of " + maxLoop +
 				". Program may be stuck in an infinite loop.";
