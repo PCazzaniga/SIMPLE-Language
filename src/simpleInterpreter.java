@@ -168,10 +168,10 @@ public class simpleInterpreter {
 			}
 			if (validOpts && !argsList.isEmpty()) {
 				simpleRTLitLexer argsLxr = new simpleRTLitLexer(null);
-				CommonTokenStream argsTS = new CommonTokenStream(argsLxr);
-				simpleRTLitParser argsPsr = new simpleRTLitParser(argsTS);
+				simpleRTLitParser argsPsr = new simpleRTLitParser(null);
 				for (String arg : argsList) {
 					argsLxr.setInputStream(CharStreams.fromString(arg));
+					argsPsr.setInputStream(new CommonTokenStream(argsLxr));
 					programArgs.add(argsPsr.literal());
 				}
 			}
