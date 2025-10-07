@@ -198,10 +198,10 @@ public class simpleInterpreter {
 		private static void printHelp(){
 			String helpMsg =
 					"""
-					SIMPLE Copyright (C) 2025 PCazzaniga (github.com)
+					SIMPLE v1.0.1 Copyright (C) 2025 PCazzaniga (github.com)
 					This program is distributed under the GNU General Public License Version 3
 					
-					Interpreter for the S.IM.P.L.E. programming language, validates and optionally executes a .simple file.
+					Interpreter for the S.I.M.P.L.E. programming language, validates and optionally executes a .simple file.
 					
 					Usage: simplexe filename [options]
 					
@@ -213,7 +213,7 @@ public class simpleInterpreter {
 					\t-e, --execute\t\tExecute file after (successful) validation
 					\t-l, --loop\t\tSet custom iteration limit for conditional loops during execution
 					\t-r, --recursion\t\tSet custom recursion limit for functions during execution
-					\ts, --simple\t\tPrint a cool ASCII logo instead of running the interpreter :)\t*
+					\t-s, --simple\t\tPrint a cool ASCII logo instead of running the interpreter :)\t*
 					
 					Options with * can be used without a filename.
 					""";
