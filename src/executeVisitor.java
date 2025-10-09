@@ -407,14 +407,16 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 		int result = 0;
 		simpleParser.AccessContext acc = strAcc.access();
 		if (acc.NUM() != null) result = Integer.parseInt(acc.NUM().getText());
-		else if (acc.var_name() != null){
-			result = (int) ((valueVisitor.numberVal) eval.visitVar_name(acc.var_name())).val();
-			if(result < 1) {
+		else {
+			if (acc.var_name() != null) {
+				result = (int) ((valueVisitor.numberVal) eval.visitVar_name(acc.var_name())).val();
+			} else if (acc.reserved() != null) {
+				result = (int) ((valueVisitor.numberVal) eval.visitReserved(acc.reserved())).val();
+			}
+			if (result < 1) {
 				System.out.println(errPrefix(acc.start) + errorRuntimeMsg.accessUnderSize(result));
 				System.exit(1);
 			}
-		} else if(acc.reserved() != null){
-			result = (int) ((valueVisitor.numberVal) eval.visitReserved(acc.reserved())).val();
 		}
 		if (result > maxPos) {
 			System.out.println(errPrefix(acc.start) + errorRuntimeMsg.accessOverSize(result, maxPos));
