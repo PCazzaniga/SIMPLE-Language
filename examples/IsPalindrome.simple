@@ -1,0 +1,101 @@
+%%This program checks whether a word or sentence is palindrome%%
+
+Define a procedure with name Main:
+	Prepare a Text with name INPUT,
+	Set Output to value of "Enter a word or sentence: ",
+	Set INPUT to value of Input,
+	Set Output to value of "Entered:\t",
+	Prepare a (List of Text) with name CLEANED,
+	Set CLEANED to value of (Execute procedure CLEANUP with INPUT),
+	Execute procedure PRINTOUT with CLEANED,
+	Set Output to value of "\n",
+	Prepare a (List of Text) with name REVERSED,
+	Set REVERSED to value of (Execute procedure REVERSE with CLEANED),
+	Set Output to value of "Reversed:\t",
+	Execute procedure PRINTOUT with REVERSED,
+	Set Output to value of "\n",
+	Set Output to value of (REVERSED = CLEANED),
+	Return Nothing.
+
+Define a procedure with name PRINTOUT that uses a (List of Text) TXTLST:
+	Prepare a Number with name SIZE and value of size of TXTLST,
+	Repeat SIZE times:
+		Set Output to value of TXTLST at position Counter;
+	Return Nothing.
+
+Define a procedure with name REVERSE that produces a (List of Text) using (List of Text) ORIGINAL:
+	Prepare a (List of Text) with name REV and value of ||,
+	Prepare a Number with name APPEND,
+	Prepare a Number with name SIZE and value of size of ORIGINAL,
+	Prepare a Number with name CURR,
+	Repeat SIZE times:
+		Set APPEND to value of (size of REV + 1),
+		Set CURR to value of ((SIZE - Counter) + 1),
+		Insert ORIGINAL at position CURR in REV at position APPEND;
+	Return REV.
+
+Define a procedure with name CLEANUP that produces a (List of Text) using Text IN:
+	%%Removes punctuation and lowers uppercase letters%%
+	Prepare a (List of Text) with name ORIGINAL,
+	Split IN in ORIGINAL,
+	Prepare a Number with name SIZE and value of size of ORIGINAL,
+	Prepare a (List of Text) with name CLEANED and value of ||,
+	Prepare a Number with name APPEND,
+	Repeat SIZE times:
+		Prepare a Text with name CURR and value of ORIGINAL at position Counter,
+		Set APPEND to value of (size of CLEANED + 1),
+		If (CURR = "A") then:
+			Insert "a" in CLEANED at position APPEND;
+		Else if (CURR = "B") then:
+			Insert "b" in CLEANED at position APPEND;
+		Else if (CURR = "C") then:
+			Insert "c" in CLEANED at position APPEND;
+		Else if (CURR = "D") then:
+			Insert "d" in CLEANED at position APPEND;
+		Else if (CURR = "E") then:
+			Insert "e" in CLEANED at position APPEND;
+		Else if (CURR = "F") then:
+			Insert "f" in CLEANED at position APPEND;
+		Else if (CURR = "G") then:
+			Insert "g" in CLEANED at position APPEND;
+		Else if (CURR = "H") then:
+			Insert "h" in CLEANED at position APPEND;
+		Else if (CURR = "I") then:
+			Insert "i" in CLEANED at position APPEND;
+		Else if (CURR = "J") then:
+			Insert "j" in CLEANED at position APPEND;
+		Else if (CURR = "K") then:
+			Insert "k" in CLEANED at position APPEND;
+		Else if (CURR = "L") then:
+			Insert "l" in CLEANED at position APPEND;
+		Else if (CURR = "M") then:
+			Insert "m" in CLEANED at position APPEND;
+		Else if (CURR = "N") then:
+			Insert "n" in CLEANED at position APPEND;
+		Else if (CURR = "O") then:
+			Insert "o" in CLEANED at position APPEND;
+		Else if (CURR = "P") then:
+			Insert "p" in CLEANED at position APPEND;
+		Else if (CURR = "Q") then:
+			Insert "q" in CLEANED at position APPEND;
+		Else if (CURR = "R") then:
+			Insert "r" in CLEANED at position APPEND;
+		Else if (CURR = "S") then:
+			Insert "s" in CLEANED at position APPEND;
+		Else if (CURR = "T") then:
+			Insert "t" in CLEANED at position APPEND;
+		Else if (CURR = "U") then:
+			Insert "u" in CLEANED at position APPEND;
+		Else if (CURR = "V") then:
+			Insert "v" in CLEANED at position APPEND;
+		Else if (CURR = "W") then:
+			Insert "w" in CLEANED at position APPEND;
+		Else if (CURR = "X") then:
+			Insert "x" in CLEANED at position APPEND;
+		Else if (CURR = "Y") then:
+			Insert "y" in CLEANED at position APPEND;
+		Else if (CURR = "Z") then:
+			Insert "z" in CLEANED at position APPEND;
+		Else if (not ((CURR = " ") or ((CURR = ".") or ((CURR = ",") or ((CURR = ";") or ((CURR = ":") or ((CURR = "!") or (CURR = "?")))))))) then:
+			Insert CURR in CLEANED at position APPEND;
+	Return CLEANED.

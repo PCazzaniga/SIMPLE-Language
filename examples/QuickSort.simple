@@ -1,0 +1,70 @@
+%%This program orders a list of numbers using quicksort%%
+
+Define a procedure with name Main:
+	Prepare a (List of Number) with name LIST,
+	Set LIST to value of (Execute procedure GET_INPUT),
+	Set Output to value of "Inserted -> ",
+	Set Output to value of LIST,
+	Set Output to value of "\n",
+	Set LIST to value of (Execute procedure SORT with LIST),
+	Set Output to value of "Sorted -> ",
+	Set Output to value of LIST,
+	Set Output to value of "\n",
+	Return Nothing.
+
+Define a procedure with name GET_INPUT that produces a (List of Number):
+	Set Output to value of "Enter the numbers one at a time.\nEnd the input with a 0.\n",
+	Prepare a Number with name INPUT and value of 1,
+	Prepare a (List of Number) with name LIST and value of ||,
+	Prepare a Number with name APPEND,
+	Repeat while (not (INPUT = 0)):
+		Set INPUT to value of Input,
+		Set APPEND to value of (size of LIST + 1),
+		Insert INPUT in LIST at position APPEND;
+	Return LIST.
+
+Define a procedure with name SORT that produces a (List of Number) using (List of Number) IN:
+	If (not (size of IN > 1)) then:
+		%%If the input has size of 1 there's no need to sort it%%
+		Return IN;
+	Else if (size of IN = 2) then:
+		%%If the input has size of 2 just check if the elements need swapping%%
+		If (IN at position 1 > IN at position 2) then:
+			Prepare a Number with name TEMP,
+			Set TEMP to value of IN at position 1,
+			Set IN at position 1 to value of IN at position 2,
+			Set IN at position 2 to value of TEMP;
+		Return IN;
+	Prepare a (List of Number) with name FIRST_HALF and value of ||,
+	Prepare a (List of Number) with name SECOND_HALF and value of ||,
+	Prepare a Number with name PIVOT and value of IN at position 1,
+	Prepare a Number with name LOOKER,
+	Prepare a Number with name APPEND,
+	Prepare a Number with name SIZE,
+	Set SIZE to value of (size of IN - 1),
+	%%Split the list according to the pivot%%
+	Repeat SIZE times:
+		Set LOOKER to value of (Counter + 1),
+		If (IN at position LOOKER < PIVOT) then:
+			Set APPEND to value of (size of FIRST_HALF + 1),
+			Insert IN at position LOOKER in FIRST_HALF at position APPEND;
+		Else:
+			Set APPEND to value of (size of SECOND_HALF + 1),
+			Insert IN at position LOOKER in SECOND_HALF at position APPEND;
+	%%Recursively sort the halves%%
+	Set FIRST_HALF to value of (Execute procedure SORT with FIRST_HALF),
+	Set SECOND_HALF to value of (Execute procedure SORT with SECOND_HALF),
+	Prepare a (List of Number) with name OUT,
+	%%Merge the halves%%
+	Set OUT to value of (Execute procedure MERGE with FIRST_HALF, PIVOT, SECOND_HALF),
+	Return OUT.
+
+Define a procedure with name MERGE that produces a (List of Number) using (List of Number) A, Number P, (List of Number) B:
+	Prepare a Number with name APPEND,
+	Set APPEND to value of (size of A + 1),
+	Insert P in A at position APPEND,
+	Prepare a Number with name SIZE and value of size of B,
+	Repeat SIZE times:
+		Set APPEND to value of (size of A + 1),
+		Insert B at position Counter in A at position APPEND;
+	Return A.

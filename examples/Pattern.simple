@@ -1,0 +1,51 @@
+%%Prints a square of random colors%%
+
+Prepare a (List of (List of Text)) with name FIELD and value of ||.
+
+Prepare a Number with name SIZE.
+
+Prepare a Number with name COLORS.
+
+Define a procedure with name Main:
+	Set Output to value of "Insert size (> 0): ",
+	Set SIZE to value of Input,
+	If (SIZE < 1) then:
+		Set Output to value of "Invalid size",
+		Return Nothing;
+	Set Output to value of "Insert colors count (between 2 and 5): ",
+	Set COLORS to value of Input,
+	If ((COLORS > 5) or (COLORS < 2)) then:
+		Set Output to value of "Invalid colors count",
+		Return Nothing;
+	Execute procedure SET_FIELD,
+	Execute procedure PRINT_FIELD,
+	Return Nothing.
+
+Define a procedure with name PRINT_FIELD:
+	Prepare a (List of Text) with name ROW,
+	Repeat SIZE times:
+		Set ROW to value of FIELD at position Counter,
+		Set Output to value of "|",
+		Repeat SIZE times:
+			Set Output to value of ROW at position Counter;
+		Set Output to value of "|\n";
+	Return Nothing.
+
+Define a procedure with name SET_FIELD:
+	Repeat SIZE times:
+		Prepare a (List of Text) with name ROW and value of ||,
+		Repeat SIZE times:
+			Prepare a Number with name ID,
+			Set ID to value of (Random mod COLORS),
+			If (ID = 0) then:
+				Insert "  " in ROW at position Counter;
+			Else if (ID = 1) then:
+				Insert "░░" in ROW at position Counter;
+			Else if (ID = 2) then:
+				Insert "▒▒" in ROW at position Counter;
+			Else if (ID = 3) then:
+				Insert "▓▓" in ROW at position Counter;
+			Else:
+				Insert "██" in ROW at position Counter;
+		Insert ROW in FIELD at position Counter;
+	Return Nothing.

@@ -1,0 +1,147 @@
+%%This program parses s-expressions%%
+
+Prepare a (Kit of Text ID, (List of #NODE) CHILDREN) with name #NODE as a new type.
+
+Define a procedure with name Main:
+	Prepare a Text with name INPUT,
+	Set Output to value of "Enter the s_expression: ",
+	Set INPUT to value of Input,
+	Prepare a (List of Text) with name CHAR_STREAM,
+	Split INPUT in CHAR_STREAM,
+	Prepare a Boolean with name IS_VALID,
+	Set IS_VALID to value of (Execute procedure CHECK_PAR with CHAR_STREAM),
+	If (not IS_VALID) then:
+		Set Output to value of "Not valid";
+	Else:
+		Set CHAR_STREAM to value of (Execute procedure CLEANUP with CHAR_STREAM),
+		Prepare a #NODE with name ROOT,
+		Set ROOT to value of (Execute procedure PARSE with CHAR_STREAM),
+		Set Output to value of "Built:\n",
+		Execute procedure PRINT_ROOT with ROOT;
+	Return Nothing.
+
+Define a procedure with name CHECK_PAR that produces a Boolean using (List of Text) LIST:
+	%%Check whether the s_expression has balanced parentheses%%
+	Prepare a Number with name SIZE and value of size of LIST,
+	If (not ((LIST at position 1 = "(") and (LIST at position SIZE = ")"))) then:
+		Return False;
+	Prepare a Number with name COUNT and value of 0,
+	Repeat SIZE times:
+		If (LIST at position Counter = "(") then:
+			Set COUNT to value of (COUNT + 1);
+		Else if (LIST at position Counter = ")") then:
+			Set COUNT to value of (COUNT - 1);
+	Return (COUNT = 0).
+
+Define a procedure with name CLEANUP that produces a (List of Text) using (List of Text) LIST:
+	%%Replaces spaces and parentheses inside strings with underscores and brackets, to avoid parsing mistakes%%
+	Prepare a Number with name SIZE and value of size of LIST,
+	Prepare a Boolean with name STRING and value of False,
+	Repeat SIZE times:
+		If (LIST at position Counter = "\"") then:
+			Set STRING to value of (not STRING);
+		Else if ((LIST at position Counter = " ") and (STRING = True)) then:
+			Set LIST at position Counter to value of "_";
+		Else if ((LIST at position Counter = "(") and (STRING = True)) then:
+			Set LIST at position Counter to value of "[";
+		Else if ((LIST at position Counter = ")") and (STRING = True)) then:
+			Set LIST at position Counter to value of "]";
+	Return LIST.
+
+Define a procedure with name PARSE that produces a #NODE using (List of Text) LIST:
+	Prepare a #NODE with name NODE and value of {"", ||},
+	%%Consume the initial (%%
+	Remove from LIST at position 1,
+	%%Consume leading spaces%%
+	Repeat while (LIST at position 1 = " "):
+		Remove from LIST at position 1;
+	%%Prepare utilities%%
+	Prepare a (List of Text) with name BUILDER and value of ||,
+	Prepare a Number with name APPEND,
+	%%Build the ID of the node, consuming characters until a space or parentheses is found%%
+	Repeat while (not ((LIST at position 1 = " ") or ((LIST at position 1 = "(") or (LIST at position 1 = ")")))):
+		Set APPEND to value of (size of BUILDER + 1),
+		Insert LIST at position 1 in BUILDER at position APPEND,
+		Remove from LIST at position 1;
+	Merge BUILDER in NODE at position @ID,
+	Set BUILDER to value of ||,
+	%%Build the content, consuming characters until the final )%%
+	Repeat while (not (LIST at position 1 = ")")):
+		If (LIST at position 1 = " ") then:
+			%%If it's a space just remove it%%
+			Remove from LIST at position 1;
+		Else if (LIST at position 1 = "(") then:
+			%%A ( is the start of a sub-node%%
+			%%Form the sub-stream by consuming characters until (s and )s are balanced%%
+			Set APPEND to value of (size of BUILDER + 1),
+			Insert LIST at position 1 in BUILDER at position APPEND,
+			Remove from LIST at position 1,
+			Prepare a Number with name COUNT and value of 1,
+			Repeat while (not (COUNT = 0)):
+				Set APPEND to value of (size of BUILDER + 1),
+				Insert LIST at position 1 in BUILDER at position APPEND,
+				If (LIST at position 1 = "(") then:
+					Set COUNT to value of (COUNT + 1);
+				Else if (LIST at position 1 = ")") then:
+					Set COUNT to value of (COUNT - 1);
+				Remove from LIST at position 1;
+			%%Build the sub-node by parsing the sub-stream%%
+			Prepare a #NODE with name CHILD,
+			Set CHILD to value of (Execute procedure PARSE with BUILDER),
+			Set BUILDER to value of ||,
+			%%Add the sub-node to the CHILDREN of the node%%
+			Prepare a (List of #NODE) with name TEMP and value of NODE at position @CHILDREN,
+			Set APPEND to value of (size of TEMP + 1),
+			Insert CHILD in TEMP at position APPEND,
+			Set NODE at position @CHILDREN to value of TEMP;
+		Else:
+			%%Anything else is a terminal sub-node%%
+			Prepare a #NODE with name LEAF and value of {"", ||},
+			%%Build the sub-node ID, same as above%%
+			Repeat while (not ((LIST at position 1 = " ") or ((LIST at position 1 = "(") or (LIST at position 1 = ")")))):
+				Set APPEND to value of (size of BUILDER + 1),
+				Insert LIST at position 1 in BUILDER at position APPEND,
+				Remove from LIST at position 1;
+			Merge BUILDER in LEAF at position @ID,
+			Set BUILDER to value of ||,
+			%%Add the sub-node to the CHILDREN of the node%%
+			Prepare a (List of #NODE) with name TEMP and value of NODE at position @CHILDREN,
+			Set APPEND to value of (size of TEMP + 1),
+			Insert LEAF in TEMP at position APPEND,
+			Set NODE at position @CHILDREN to value of TEMP;
+	Return NODE.
+
+Define a procedure with name PRINT_ROOT that uses a #NODE ROOT:
+	Set Output to value of ROOT at position @ID,
+	Prepare a (List of #NODE) with name CHILDREN and value of ROOT at position @CHILDREN,
+	If (size of CHILDREN > 0) then:
+		Prepare a Number with name SIZE and value of size of CHILDREN,
+		Prepare a (List of Text) with name PREFIX and value of |"├── "|,
+		Repeat SIZE times:
+			If (Counter = SIZE) then:
+				Set PREFIX at position 1 to value of "└── ";
+			Execute procedure PRINT_NODE with CHILDREN at position Counter, PREFIX;
+	Return Nothing.
+
+Define a procedure with name PRINT_NODE that uses a #NODE NODE, (List of Text) PREFIX:
+	Set Output to value of "\n",
+	Prepare a Number with name INDENTATION,
+	Set INDENTATION to value of size of PREFIX,
+	Repeat INDENTATION times:
+		Set Output to value of PREFIX at position Counter;
+	Set Output to value of NODE at position @ID,
+	Prepare a (List of #NODE) with name CHILDREN and value of NODE at position @CHILDREN,
+	If (size of CHILDREN > 0) then:
+		Prepare a Number with name SIZE and value of size of CHILDREN,
+		If (PREFIX at position INDENTATION = "└── ") then:
+			Set PREFIX at position INDENTATION to value of "    ";
+		Else:
+			Set PREFIX at position INDENTATION to value of "|   ";
+		Set INDENTATION to value of (INDENTATION + 1),
+		Insert "├── " in PREFIX at position INDENTATION,
+		Repeat SIZE times:
+			If (Counter = SIZE) then:
+				Set PREFIX at position INDENTATION to value of "└── ";
+			Execute procedure PRINT_NODE with CHILDREN at position Counter, PREFIX;
+	Return Nothing.
+
