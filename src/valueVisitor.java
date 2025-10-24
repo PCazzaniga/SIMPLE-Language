@@ -407,13 +407,18 @@ class valueVisitor extends simpleBaseVisitor<valueVisitor.Val> {
 	}
 	
 	private String cleanUpTextLit(String text){
-		return text.substring(1, text.length() - 1).replace("\\\\", "\\")
-													.replace("\\t", "\t")
-													.replace("\\b", "\b")
-													.replace("\\n", "\n")
-													.replace("\\r", "\r")
-													.replace("\\f", "\f")
-													.replace("\\\"", "\"");
+		String clean = text.substring(1, text.length() - 1)
+								.replace("\\\\", "\\")
+								.replace("\\t", "\t")
+								.replace("\\b", "\b")
+								.replace("\\n", "\n")
+								.replace("\\r", "\r")
+								.replace("\\f", "\f")
+								.replace("\\\"", "\"")
+								.replace("\\x5C", "\\")
+								.replace("\\x24", "$");
+		Pattern asciiEsc = Pattern.compile("\\\\x([0-9a-fA-F]{2})");
+		return asciiEsc.matcher(clean).replaceAll(match -> String.valueOf((char) Integer.parseInt(match.group(1), 16)));
 	}
 
 	private Val fetchValue(String name) {
