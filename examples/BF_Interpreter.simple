@@ -1,0 +1,217 @@
+%%Interpreter for the Brainf*** language%%
+%%E.G. HelloWorld program:%%
+%%++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.%%
+
+%%Program memory, starts as a list of ten 0s%%
+Prepare a (List of Number) with name MEMORY and value of |0; 0; 0; 0; 0; 0; 0; 0; 0; 0|.
+
+%%Memory pointer%%
+Prepare a Number with name MPTR and value of 1.
+
+%%Program instructions, starts empty%%
+Prepare a (List of Text) with name PROG and value of ||.
+
+%%Program pointer%%
+Prepare a Number with name PPTR and value of 1.
+
+%%Type for pairs of brackets positions%%
+Prepare a (Kit of Number OP, Number CL) with name #BRACKET_PAIR as a new type.
+
+%%"Map" from open brackets to the corresponding closed brackets (and vice-versa)%%
+Prepare a (List of #BRACKET_PAIR) with name BRACKETS and value of ||.
+
+%%Ascii table%%
+Prepare a (List of (Sequence of 8 Text)) with name ASCII_T and value of ||.
+
+%%Input buffer%%
+Prepare a (List of Text) with name BUFFER and value of ||.
+
+Define a procedure with name Main:
+	Prepare a Boolean with name VALID_PROG,
+	Set VALID_PROG to value of (Execute procedure GET_PROG),
+	If (not VALID_PROG) then:
+		Set Output to value of "\nInvalid BF program";
+	Else:
+		Execute procedure PAIR_UP,
+		Execute procedure PREP_TABLE,
+		Execute procedure RUN_PROG;
+	Return Nothing.
+
+Define a procedure with name GET_PROG that produces a Boolean:
+	%%Gets the program as input and removes non-instruction characters%%
+	%%Checks that [s and ]s are balanced and that the program has any instruction at all%%
+	Set Output to value of "Enter BF program (cannot contain newlines): \n",
+	Prepare a Text with name INPUT,
+	Set INPUT to value of Input,
+	Prepare a (List of Text) with name TEMP and value of ||,
+	Split INPUT in TEMP,
+	Prepare a Number with name SIZE and value of size of TEMP,
+	Prepare a Text with name I,
+	Prepare a Number with name BALANCE and value of 0,
+	Prepare a Number with name APPEND and value of size of PROG,
+	Repeat SIZE times:
+		%%For each character of the input if it's a BF instruction save it otherwise skip it%%
+		Set I to value of TEMP at position Counter,
+		If ((I = ">") or ((I = "<") or ((I = "+") or ((I = "-") or ((I = ".") or ((I = ",") or ((I = "[") or (I = "]")))))))) then:
+			%%Also count brackets balance%%
+			If (I = "[") then:
+				Set BALANCE to value of (BALANCE + 1);
+			Else if (I = "]") then:
+				Set BALANCE to value of (BALANCE - 1);
+			Set APPEND to value of (APPEND + 1),
+			Insert I in PROG at position APPEND;
+	Return ((BALANCE = 0) and (APPEND > 0)).
+
+Define a procedure with name PAIR_UP:
+	%%Builds the pairs of open bracket - closed bracket positions%%
+	Prepare a (List of Number) with name STACK and value of ||,
+	Prepare a Number with name SIZE and value of size of PROG,
+	Prepare a Number with name APPEND and value of size of STACK,
+	Prepare a Number with name SAVE and value of size of BRACKETS,
+	Prepare a Number with name CURR,
+	Repeat SIZE times:
+		If (PROG at position Counter = "[") then:
+			%%If a [ is found push its position on the stack%%
+			Set APPEND to value of (APPEND + 1),
+			Set CURR to value of Counter,
+			Insert CURR in STACK at position APPEND;
+		Else if (PROG at position Counter = "]") then:
+			%%If a ] is found save its position paired with the one of a [ popped from the stack%%
+			Prepare a #BRACKET_PAIR with name PAIR and value of {0, 0},
+			Set PAIR at position @CL to value of Counter,
+			%%This breaks if the brackets are not balanced !%%
+			Set PAIR at position @OP to value of STACK at position APPEND,
+			Remove from STACK at position APPEND,
+			Set APPEND to value of (APPEND - 1),
+			Set SAVE to value of (SAVE + 1),
+			%%By recording the pairs this way, nested [ ]s will appear in the list before nesting [ ]s%%
+			%%which makes it quicker to later find them when jumping, especially for programs with lots of them%%
+			Insert PAIR in BRACKETS at position SAVE;
+	Return Nothing.
+
+Define a procedure with name PREP_TABLE:
+	%%Fills the ascii table%%
+	Insert ["\x00", "\x01", "\x02", "\x03", "\x04", "\x05", "\x06", "\x07"] in ASCII_T at position 1,
+	Insert ["\x08", "\x09", "\x0A", "\x0B", "\x0C", "\x0D", "\x0E", "\x0F"] in ASCII_T at position 2,
+	Insert ["\x10", "\x11", "\x12", "\x13", "\x14", "\x15", "\x16", "\x17"] in ASCII_T at position 3,
+	Insert ["\x18", "\x19", "\x1A", "\x1B", "\x1C", "\x1D", "\x1E", "\x1F"] in ASCII_T at position 4,
+	Insert ["\x20", "\x21", "\x22", "\x23", "\x24", "\x25", "\x26", "\x27"] in ASCII_T at position 5,
+	Insert ["\x28", "\x29", "\x2A", "\x2B", "\x2C", "\x2D", "\x2E", "\x2F"] in ASCII_T at position 6,
+	Insert ["\x30", "\x31", "\x32", "\x33", "\x34", "\x35", "\x36", "\x37"] in ASCII_T at position 7,
+	Insert ["\x38", "\x39", "\x3A", "\x3B", "\x3C", "\x3D", "\x3E", "\x3F"] in ASCII_T at position 8,
+	Insert ["\x40", "\x41", "\x42", "\x43", "\x44", "\x45", "\x46", "\x47"] in ASCII_T at position 9,
+	Insert ["\x48", "\x49", "\x4A", "\x4B", "\x4C", "\x4D", "\x4E", "\x4F"] in ASCII_T at position 10,
+	Insert ["\x50", "\x51", "\x52", "\x53", "\x54", "\x55", "\x56", "\x57"] in ASCII_T at position 11,
+	Insert ["\x58", "\x59", "\x5A", "\x5B", "\x5C", "\x5D", "\x5E", "\x5F"] in ASCII_T at position 12,
+	Insert ["\x60", "\x61", "\x62", "\x63", "\x64", "\x65", "\x66", "\x67"] in ASCII_T at position 13,
+	Insert ["\x68", "\x69", "\x6A", "\x6B", "\x6C", "\x6D", "\x6E", "\x6F"] in ASCII_T at position 14,
+	Insert ["\x70", "\x71", "\x72", "\x73", "\x74", "\x75", "\x76", "\x77"] in ASCII_T at position 15,
+	Insert ["\x78", "\x79", "\x7A", "\x7B", "\x7C", "\x7D", "\x7E", "\x7F"] in ASCII_T at position 16,
+	Return Nothing.
+
+
+Define a procedure with name RUN_PROG:
+	%%Executes the program according to the BF spec%%
+	Prepare a Text with name CURR,
+	Prepare a Number with name MEM_APPEND and value of size of MEMORY,
+	Repeat while (not (PPTR > size of PROG)):
+		%%Look at the current instruction%%
+		Set CURR to value of PROG at position PPTR,
+		If (CURR = ">") then:
+			%%Increment memory pointer%%
+			Set MPTR to value of (MPTR + 1),
+			%%If exceeding memory size append a new cell%%
+			If (MPTR > MEM_APPEND) then:
+				Set MEM_APPEND to value of (MEM_APPEND + 1),
+				Insert 0 in MEMORY at position MEM_APPEND;
+		Else if (CURR = "<") then:
+			%%Decrement memory pointer%%
+			Set MPTR to value of (MPTR - 1);
+		Else if (CURR = "+") then:
+			%%Increment pointed memory%%
+			Set MEMORY at position MPTR to value of (MEMORY at position MPTR + 1),
+			%%If the memory cell is set at more than 255 signal error and end the execution%%
+			If (MEMORY at position MPTR > 255) then:
+				Set Output to value of "\nByte overflow at ",
+				Set Output to value of MPTR,
+				Set PPTR to value of size of PROG;
+		Else if (CURR = "-") then:
+			%%Decrement pointed memory%%
+			Set MEMORY at position MPTR to value of (MEMORY at position MPTR - 1),
+			%%If the memory cell is set at less than 0 signal error and end the execution%%
+			If (MEMORY at position MPTR < 0) then:
+				Set Output to value of "\nByte underflow at ",
+				Set Output to value of MPTR,
+				Set PPTR to value of size of PROG;
+		Else if (CURR = ".") then:
+			%%Output pointed memory%%
+			Set Output to value of (Execute procedure DECODE with MEMORY at position MPTR);
+		Else if (CURR = ",") then:
+			%%Input at pointed memory%%
+			If (size of BUFFER = 0) then:
+				Prepare a Text with name INPUT,
+				Set INPUT to value of Input,
+				Split INPUT in BUFFER,
+				If ((BUFFER at position 1 = "\\") and (size of BUFFER > 1)) then:
+					%%An input that starts with \ is treated as an escaped input%%
+					%%This allows to input numbers while still being recognized as Texts rather than Numbers%%
+					Remove from BUFFER at position 1;
+			Set MEMORY at position MPTR to value of (Execute procedure ENCODE with BUFFER at position 1),
+			Remove from BUFFER at position 1;
+		Else if ((CURR = "[") and (MEMORY at position MPTR = 0)) then:
+			%%Jump forward%%
+			Execute procedure JUMP;
+		Else if ((CURR = "]") and (not (MEMORY at position MPTR = 0))) then:
+			%%Jump back%%
+			Execute procedure JUMP;
+		%%Move the program pointer to the next instruction%%
+		Set PPTR to value of (PPTR + 1);
+	Return Nothing.
+
+Define a procedure with name DECODE that produces a Text using Number CODE:
+	%%Returns an ascii character corresponding to decimal code CODE%%
+	If ((CODE > 127) or (CODE < 0)) then:
+		Return "�";
+	Prepare a Number with name ROW,
+	Set ROW to value of ((CODE / 8) + 1),
+	Prepare a Number with name COLUMN,
+	Set COLUMN to value of ((CODE mod 8) + 1),
+	Prepare a (Sequence of 8 Text) with name TEMP,
+	Set TEMP to value of ASCII_T at position ROW,
+	Return TEMP at position COLUMN.
+
+Define a procedure with name ENCODE that produces a Number using Text CHAR:
+	%%Return the decimal code corresponding to an ascii character%%
+	Prepare a (Sequence of 8 Text) with name TEMP,
+	Prepare a Number with name ROW,
+	Repeat 16 times:
+		Set TEMP to value of ASCII_T at position Counter,
+		Set ROW to value of Counter,
+		Repeat 8 times:
+			If (TEMP at position Counter = CHAR) then:
+				Return ((Counter - 1) + ((ROW - 1) * 8));
+	%%If it is not an ASCII character signal error and end execution%%
+	Set Output to value of "\nInvalid non-ASCII character ",
+	Set Output to value of CHAR,
+	Set PPTR to value of size of PROG,
+	Return -1.
+
+Define a procedure with name JUMP:
+	%%Search for a paired bracket with position equal to the current program pointer%%
+	%%then moves the program pointer to the corresponding open/close bracket position%%
+	Prepare a Number with name SIZE and value of size of BRACKETS,
+	Prepare a #BRACKET_PAIR with name CURR,
+	Repeat SIZE times:
+		Set CURR to value of BRACKETS at position Counter,
+		If (CURR at position @OP = PPTR) then:
+			Set PPTR to value of CURR at position @CL,
+			Return Nothing;
+		Else if (CURR at position @CL = PPTR) then:
+			Set PPTR to value of CURR at position @OP,
+			Return Nothing;
+	%%If SOMEHOW a paired bracket wasn't found jump the execution to the end of the program%%
+	Set PPTR to value of size of PROG,
+	Return Nothing.
+
+
+%%+++++++++>>,<<[->+++++<]>+++[>-<-]>>+++++[>++++++++++<-]>-<<[>>.<<]>>-.%%
