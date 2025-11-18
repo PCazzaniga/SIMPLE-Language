@@ -53,6 +53,8 @@ public class simpleInterpreter {
 		simpleLexer lexer = new simpleLexer(input);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		simpleParser parser = new simpleParser(tokens);
+		parser.removeErrorListeners();
+		parser.addErrorListener(new simpleErrorListener(parser));
 		simpleParser.FileContext fileTree = parser.file();
 
 		if (parser.getNumberOfSyntaxErrors() < 1){
@@ -62,7 +64,7 @@ public class simpleInterpreter {
 
 			ParseTreeWalker walker = new ParseTreeWalker();
 
-			validateListener validator = new validateListener();
+			validateListener validator = new validateListener(parser);
 			walker.walk(validator, fileTree);
 
 			if (validator.isValidationOk()){
@@ -71,7 +73,7 @@ public class simpleInterpreter {
 					System.out.println("Invalid CL call");
 				} else if (argsIn.execOpt) {
 					if (validator.validateProgramArgs(argsIn.programArgs.stream().map(inputHandler::typeOfLiteral).collect(Collectors.toList()))) {
-						executeVisitor.Builder execB = new executeVisitor.Builder();
+						executeVisitor.Builder execB = new executeVisitor.Builder(parser);
 						execB.setExpectedInputs(validator.getRuntimeInputs());
 						execB.setProgramArgs(argsIn.programArgs.stream().map(inputHandler::valOfLiteral).collect(Collectors.toList()));
 						if(argsIn.loopLimit > 0){
@@ -198,7 +200,7 @@ public class simpleInterpreter {
 		private static void printHelp(){
 			String helpMsg =
 					"""
-					SIMPLE v1.1.1 Copyright (C) 2025 PCazzaniga (github.com)
+					SIMPLE v1.2.0 Copyright (C) 2025 PCazzaniga (github.com)
 					This program is distributed under the GNU General Public License Version 3
 					
 					Interpreter for the S.I.M.P.L.E. programming language, validates and optionally executes a .simple file.

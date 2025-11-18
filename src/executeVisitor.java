@@ -18,8 +18,13 @@
  */
 
 import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.TokenSource;
+import org.antlr.v4.runtime.misc.Pair;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -32,7 +37,11 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 
 class executeVisitor extends simpleBaseVisitor<Void>{
-	
+
+	private final Parser recognizer;
+
+	private final Token dummy;
+
 	private static int MAX_LOOP = 100;
 	
 	private final Map<String, Integer> callTracker = new HashMap<>();
@@ -62,10 +71,13 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 	
 	private executeVisitor(Builder builder) {
 		super();
+		recognizer = builder.recognizer;
+		TokenSource src = recognizer.getInputStream().getTokenSource();
+		dummy = recognizer.getTokenFactory().create(new Pair<>(src, src.getInputStream()), -1, "", 0, -1, -1, -1, -1);
 		if (builder.expectedInputs != null) runtimeInputs.putAll(builder.expectedInputs);
 		MAX_RECURSION = builder.maxRecursion;
 		MAX_LOOP = builder.maxLoop;
-		eval = new valueVisitor(localVars, allVars);
+		eval = new valueVisitor(recognizer, localVars, allVars);
 		if (builder.programArgs != null){
 			List<valueVisitor.Val> argsCopy = new ArrayList<>(builder.programArgs);
 			Collections.reverse(argsCopy);
@@ -79,7 +91,12 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 		private Map<Integer, typeVisitor.dataType> expectedInputs = null;
 		private int maxLoop = MAX_LOOP;
 		private int maxRecursion = MAX_RECURSION;
-		
+		private final Parser recognizer;
+
+		Builder(Parser recognizer) {
+			this.recognizer = recognizer;
+		}
+
 		public void setExpectedInputs(Map<Integer, typeVisitor.dataType> expectedInputs) {
 			this.expectedInputs = expectedInputs;
 		}
@@ -176,10 +193,10 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 			}
 			visitFun_decl(functions.get(mainFunc));
 			if (!valuesStack.isEmpty() && !(valuesStack.peek() instanceof valueVisitor.nothingVal)){
-				System.out.println("Program produced " + valuesStack);
+				recognizer.notifyErrorListeners(dummy, "Program produced " + valuesStack, null);
 			}
 		} else {
-			System.out.println(errorRuntimeMsg.noMain());
+			recognizer.notifyErrorListeners(dummy, errorRuntimeMsg.noMain(), null);
 			System.exit(1);
 		}
 		return null;
@@ -207,7 +224,7 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 		if (callTracker.containsKey(fun_name)){
 			int current_call = callTracker.get(fun_name) + 1;
 			if (current_call > MAX_RECURSION){
-				System.out.println(errPrefix(ctx.start) + errorRuntimeMsg.recursionOverLimit(fun_name, MAX_RECURSION));
+				signalLongError(ctx, errorRuntimeMsg.recursionOverLimit(fun_name, MAX_RECURSION));
 				System.exit(1);
 			} else callTracker.replace(fun_name, current_call);
 		} else callTracker.put(fun_name, 1);
@@ -378,7 +395,7 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 
 	private valueVisitor.Val getInput(int line) {
 		if(!runtimeInputs.containsKey(line)){
-			System.out.println("line " + line + " " + (errorRuntimeMsg.unexpectedInputRequest()));
+			recognizer.notifyErrorListeners(dummy, errorRuntimeMsg.unexpectedInputRequest(line), null);
 			System.exit(1);
 		}
 		Scanner sc = new Scanner(System.in);
@@ -390,15 +407,15 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 				if (runtimeParser.getNumberOfSyntaxErrors() < 1) {
 					typeVisitor.dataType gotType = inputHandler.typeOfLiteral(inputLit);
 					if (gotType.equals(runtimeInputs.get(line))) return inputHandler.valOfLiteral(inputLit);
-					System.out.println(errorRuntimeMsg.inputMismatchedType(gotType, runtimeInputs.get(line)));
+					recognizer.notifyErrorListeners(dummy, errorRuntimeMsg.inputMismatchedType(gotType, runtimeInputs.get(line)), null);
 				}
-				if (i < MAX_LOOP - 1) System.out.println(errorRuntimeMsg.inputAgain());
+				if (i < MAX_LOOP - 1) recognizer.notifyErrorListeners(dummy, errorRuntimeMsg.inputAgain(), null);
 			} else {
-				System.out.println(errorRuntimeMsg.inputInterrupted());
+				recognizer.notifyErrorListeners(dummy, errorRuntimeMsg.inputInterrupted(), null);
 				System.exit(1);
 			}
 		}
-		System.out.println(errorRuntimeMsg.inputTooManyAttempts(MAX_LOOP));
+		recognizer.notifyErrorListeners(dummy, errorRuntimeMsg.inputTooManyAttempts(MAX_LOOP), null);
 		System.exit(1);
 		return new valueVisitor.nothingVal();	
 	}
@@ -414,19 +431,15 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 				result = (int) ((valueVisitor.numberVal) eval.visitReserved(acc.reserved())).val();
 			}
 			if (result < 1) {
-				System.out.println(errPrefix(acc.start) + errorRuntimeMsg.accessUnderSize(result));
+				signalLongError(acc, errorRuntimeMsg.accessUnderSize(result));
 				System.exit(1);
 			}
 		}
 		if (result > maxPos) {
-			System.out.println(errPrefix(acc.start) + errorRuntimeMsg.accessOverSize(result, maxPos));
+			signalLongError(acc, errorRuntimeMsg.accessOverSize(result, maxPos));
 			System.exit(1);
 		}
 		return result;
-	}
-
-	private String errPrefix(Token posRef){
-		return "line " + posRef.getLine() + ":" + posRef.getCharPositionInLine() + " ";
 	}
 	
 	private void runCondLoop(simpleParser.ConditionContext cond, simpleParser.Scope_blockContext block) {
@@ -439,7 +452,7 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 			localVars.put(counter, new valueVisitor.numberVal(loopCounter));
 		}
 		if (loopCounter > MAX_LOOP){
-			System.out.println("line " + cond.start.getLine() + " " + errorRuntimeMsg.loopOverLimit(MAX_LOOP));
+			signalLongError(cond, errorRuntimeMsg.loopOverLimit(MAX_LOOP));
 			System.exit(1);
 		}
 	}
@@ -458,6 +471,12 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 			loopCounter++;
 			localVars.put(counter, new valueVisitor.numberVal(loopCounter));
 		}
+	}
+
+	private void signalLongError(ParserRuleContext ctx, String msg){
+		CommonToken ref = new CommonToken(ctx.start);
+		ref.setStopIndex(ctx.stop.getStopIndex());
+		recognizer.notifyErrorListeners(ref, msg, null);
 	}
 	
 	private void updateVariable(simpleParser.VariableContext var, valueVisitor.Val newVal){
