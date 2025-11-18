@@ -212,6 +212,3 @@ Define a procedure with name JUMP:
 	%%If SOMEHOW a paired bracket wasn't found jump the execution to the end of the program%%
 	Set PPTR to value of size of PROG,
 	Return Nothing.
-
-
-%%+++++++++>>,<<[->+++++<]>+++[>-<-]>>+++++[>++++++++++<-]>-<<[>>.<<]>>-.%%
