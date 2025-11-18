@@ -17,8 +17,12 @@
  *     along with SIMPLE.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import org.antlr.v4.runtime.CommonToken;
+import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.TokenSource;
+import org.antlr.v4.runtime.misc.Pair;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -30,6 +34,8 @@ import java.util.Map;
 import java.util.function.Function;
 
 class validateListener extends simpleBaseListener{
+
+	private final Parser recognizer;
 
 	private boolean validationOk = false;
 
@@ -53,26 +59,21 @@ class validateListener extends simpleBaseListener{
 	
 	private final Map<Integer, typeVisitor.dataType> runtimeInputs = new HashMap<>();
 
-	private record Error (int line, int position, String text){
-		@Override
-		public String toString() {
-			return "line " + line + ":" + position + " " + text;
-		}
-	}
+	private record Error (Token offender, String text){}
 	
 	public static class Information{
 		private final typeVisitor.dataType type;
-		private final int line;
+		private final Token reference;
 		private boolean notUsed = true;
 		private boolean notInit = true;
 
-		public Information(typeVisitor.dataType type, int line){
+		public Information(typeVisitor.dataType type, Token reference){
 			this.type = type;
-			this.line = line;
+			this.reference = reference;
 		}
 
 		public int getLine() {
-			return line;
+			return reference.getLine();
 		}
 
 		public typeVisitor.dataType getType() {
@@ -96,24 +97,24 @@ class validateListener extends simpleBaseListener{
 
 		@Override
 		public String toString() {
-			return "{" + type + ", " + line + ", " + notUsed + '}';
+			return "{" + type + ", " + reference.getLine() + ", " + notUsed + '}';
 		}
 	}
 
 	public static class FuncInfo{
 		private final typeVisitor.dataType returnType;
 		private final List<typeVisitor.dataType> paramTypes;
-		private final int line;
+		private final Token reference;
 		private boolean unused = true;
 
-		public FuncInfo(typeVisitor.dataType returnType, List<typeVisitor.dataType> paramTypes, int line){
+		public FuncInfo(typeVisitor.dataType returnType, List<typeVisitor.dataType> paramTypes, Token reference){
 			this.returnType = returnType;
 			this.paramTypes = paramTypes;
-			this.line = line;
+			this.reference = reference;
 		}
 
 		public int getLine() {
-			return line;
+			return reference.getLine();
 		}
 
 		public List<typeVisitor.dataType> getParamTypes() {
@@ -134,10 +135,14 @@ class validateListener extends simpleBaseListener{
 
 		@Override
 		public String toString() {
-			return "{" + returnType + ", " + paramTypes + ", " + line + ", " + unused + '}';
+			return "{" + returnType + ", " + paramTypes + ", " + reference.getLine() + ", " + unused + '}';
 		}
 	}
-	
+
+	public validateListener(Parser recognizer) {
+		this.recognizer = recognizer;
+	}
+
 	@Override
 	public void enterAssignment(simpleParser.AssignmentContext ctx) {
 		simpleParser.ValueContext srcVal = ctx.value();
@@ -149,7 +154,7 @@ class validateListener extends simpleBaseListener{
 			if (targetType != null && !targetType.isUnknown()) {
 				if (ctx.INP() != null) {
 					if (targetType.isSequence() || targetType.isList() || targetType.isKit()){
-						addError(ctx.INP().getSymbol(), errorMsg.assignInputToStruct(targetType.toString()));
+						errors.add(new Error(ctx.INP().getSymbol(), errorMsg.assignInputToStruct(targetType.toString())));
 					}
 					else runtimeInputs.put(ctx.start.getLine(), targetType);
 				} else {
@@ -162,23 +167,22 @@ class validateListener extends simpleBaseListener{
 							if (srcVar != null){
 								varHasValueCheck(srcVar);
 								if (srcVar.getText().equals(target.getText())){
-									addError(srcVar.start, errorMsg.assignUseless(srcVar.getText(), "itself"));
+									addLongError(srcVar, errorMsg.assignUseless(srcVar.getText(), "itself"));
 								}
 							}
 
 						}
 					}
-					if (srcType.isUnknown()) addError(srcVal.start, errorMsg.assignTypeUnk(srcVal.getText()));
+					if (srcType.isUnknown()) addLongError(srcVal, errorMsg.assignTypeUnk(srcVal.getText()));
 					else if (!targetType.equals(srcType)) {
-						addError(ctx.SET().getSymbol(), errorMsg.assignTypeWrong(targetType.toString(),
-																					srcType.toString()));
+						addLongError(srcVal, errorMsg.assignTypeWrong(targetType.toString(), srcType.toString()));
 					}
 				}
 				if (target.var_name() != null) initiateVar(target);
 			}
 		} else {
 			if (ctx.INP() != null){
-				addError(ctx.INP().getSymbol(), errorMsg.assignUseless(ctx.INP().getText(), ctx.OUTP().getText()));
+				errors.add(new Error(ctx.INP().getSymbol(), errorMsg.assignUseless(ctx.INP().getText(), ctx.OUTP().getText())));
 			} else if (srcVal != null && srcVal.direct_value() != null){
 				if (srcVal.direct_value().variable() != null) varHasValueCheck(srcVal.direct_value().variable());
 			}
@@ -197,7 +201,7 @@ class validateListener extends simpleBaseListener{
 			List<String> options = typeStr.length() > 1 && !types.isEmpty() ?
 									findSimilar(typeStr, new ArrayList<>(types.keySet())) :
 									new ArrayList<>();
-			addError(ctx.TYPENAME().getSymbol(), errorMsg.typeUndefined(typeStr, options));
+			errors.add(new Error(ctx.TYPENAME().getSymbol(), errorMsg.typeUndefined(typeStr, options)));
 		}
 		else if (types.get(typeStr).isNotUsed()) types.get(typeStr).switchToUsed();
 	}
@@ -212,7 +216,7 @@ class validateListener extends simpleBaseListener{
 		if (ctx.fun_call() != null){
 			if (functions.containsKey(ctx.fun_call().fun_name().getText())){
 				typeVisitor.dataType funType = functions.get(ctx.fun_call().fun_name().getText()).getReturnType();
-				if (!funType.isNothing()) addError(ctx.start, errorMsg.funResNotVoid(funType.toString()));
+				if (!funType.isNothing()) addLongError(ctx, errorMsg.funResNotVoid(funType.toString()));
 			}
 		}
 	}
@@ -234,7 +238,7 @@ class validateListener extends simpleBaseListener{
 			List<String> options = !functions.isEmpty() ?
 									findSimilar(nameStr, new ArrayList<>(functions.keySet())) :
 									new ArrayList<>();
-			addError(ctx.fun_name().NAME().getSymbol(), errorMsg.funUndefined(nameStr, options));
+			errors.add(new Error(ctx.fun_name().NAME().getSymbol(), errorMsg.funUndefined(nameStr, options)));
 		} else {
 			FuncInfo func = functions.get(nameStr);
 			if(func.getUnused()) func.switchToUsed();
@@ -245,14 +249,14 @@ class validateListener extends simpleBaseListener{
 				if (argVar != null) varHasValueCheck(argVar);
 				typeVisitor.dataType argType = typeChecker.visitDirect_value(arg);
 				if (argType.isUnknown()){
-					addError(arg.start, errorMsg.funArgTypeUnk(argType.toString(), arg.getText()));
+					addLongError(arg, errorMsg.funArgTypeUnk(argType.toString(), arg.getText()));
 					allOk = false;
 				} else args.add(argType);
 			}
 			if (allOk) {
 				List<typeVisitor.dataType> params = functions.get(nameStr).getParamTypes();
 				if (params.size() != args.size()){
-					addError(ctx.start, errorMsg.funArgsNumWrong(nameStr, args.size(), params.size()));
+					addLongError(ctx, errorMsg.funArgsNumWrong(nameStr, args.size(), params.size()));
 				} else {
 					for (int i = 0; i < args.size(); i++){
 						if(!args.get(i).equals(params.get(i))){
@@ -260,7 +264,7 @@ class validateListener extends simpleBaseListener{
 							for (typeVisitor.dataType p : params) paramStr.add(p.toString());
 							List<String> argStr = new ArrayList<>();
 							for (typeVisitor.dataType a : args) argStr.add(a.toString());
-							addError(ctx.start, errorMsg.funArgsTypeWrong(nameStr, argStr, paramStr));
+							addLongError(ctx, errorMsg.funArgsTypeWrong(nameStr, argStr, paramStr));
 							break;
 						}
 					}
@@ -287,12 +291,12 @@ class validateListener extends simpleBaseListener{
 					}
 				}
 			}
-			if(alreadyExists) addError(name, errorMsg.funParAlreadyVar(nameStr, alreadyLine));
-			else if(pendingVars.containsKey(nameStr)) addError(name, errorMsg.funParAlreadyExist(currentFun, nameStr));
+			if(alreadyExists) errors.add(new Error(name, errorMsg.funParAlreadyVar(nameStr, alreadyLine)));
+			else if(pendingVars.containsKey(nameStr)) errors.add(new Error(name, errorMsg.funParAlreadyExist(currentFun, nameStr)));
 			else {
 				typeVisitor.dataType type = typeChecker.visitType(p.type());
 				if (!type.isUnknown()) {
-					Information varInfo = new Information(type, name.getLine());
+					Information varInfo = new Information(type, name);
 					varInfo.switchToInit();
 					pendingVars.put(nameStr, varInfo);
 				}
@@ -325,13 +329,13 @@ class validateListener extends simpleBaseListener{
 		typeVisitor.dataType structType = typeChecker.visitVar_name(ctx.struct_access().var_name());
 		if(!(structType.isUnknown())){
 			if(!structType.isList()){
-				addError(ctx.struct_access().var_name().start, errorMsg.listOpNotList(structType));
+				errors.add(new Error(ctx.struct_access().var_name().start, errorMsg.listOpNotList(structType)));
 			} else {
 				typeVisitor.dataType gotType = typeChecker.visitDirect_value(ctx.direct_value());
 				if(!gotType.isUnknown()){
 					typeVisitor.dataType wantType = ((typeVisitor.listType) structType).getInnerType();
 					if(!(wantType.equals(gotType))){
-						addError(ctx.direct_value().start, errorMsg.listInsertTypeWrong(gotType, wantType));
+						addLongError(ctx.direct_value(), errorMsg.listInsertTypeWrong(gotType, wantType));
 					}
 				}
 			}
@@ -342,7 +346,7 @@ class validateListener extends simpleBaseListener{
 	public void enterListRemoval(simpleParser.ListRemovalContext ctx) {
 		typeVisitor.dataType structType = typeChecker.visitVar_name(ctx.struct_access().var_name());
 		if (!structType.isUnknown() && !structType.isList()) {
-			addError(ctx.struct_access().var_name().start, errorMsg.listOpNotList(structType));
+			errors.add(new Error(ctx.struct_access().var_name().start, errorMsg.listOpNotList(structType)));
 		}
 	}
 
@@ -356,18 +360,18 @@ class validateListener extends simpleBaseListener{
 		simpleParser.Direct_valueContext quantVal = ctx.direct_value();
 		typeVisitor.dataType quantType = typeChecker.visitDirect_value(quantVal);
 		if(quantVal.variable() != null) varHasValueCheck(quantVal.variable());
-		if (quantType.isUnknown()) addError(quantVal.start, errorMsg.loopQuantTypeUnk(quantVal.getText()));
-		else if (!quantType.isNumber()) addError(quantVal.start, errorMsg.loopQuantTypeWrong(quantType.toString()));
+		if (quantType.isUnknown()) addLongError(quantVal, errorMsg.loopQuantTypeUnk(quantVal.getText()));
+		else if (!quantType.isNumber()) addLongError(quantVal, errorMsg.loopQuantTypeWrong(quantType.toString()));
 	}
 
 	@Override
 	public void enterReserved(simpleParser.ReservedContext ctx) {
-		if (ctx.COUNTER() != null && activeLoops < 1) addError(ctx.COUNTER().getSymbol(), errorMsg.invalidCounterUse());
+		if (ctx.COUNTER() != null && activeLoops < 1) errors.add(new Error(ctx.COUNTER().getSymbol(), errorMsg.invalidCounterUse()));
 		if (ctx.SIZEOF() != null){
 			if (varStructTypeCheck(ctx.var_name(), errorMsg::invalidSizeOf)){
 				Token varName = ctx.var_name().NAME().getSymbol();
 				Information initInfo = getVariable(varName.getText());
-				if (initInfo != null && initInfo.isNotInit()) addError(varName, errorMsg.invalidSizeOfEmpty());
+				if (initInfo != null && initInfo.isNotInit()) errors.add(new Error(varName, errorMsg.invalidSizeOfEmpty()));
 			}
 		}
 	}
@@ -382,9 +386,9 @@ class validateListener extends simpleBaseListener{
 			typeVisitor.dataType wantType = functions.get(currentFun).getReturnType();
 			typeVisitor.dataType gotType = typeChecker.visitValue(retVal);
 			if (gotType.isUnknown()) {
-				addError(retVal.start, errorMsg.retTypeUnk(retVal.getText()));
+				addLongError(retVal, errorMsg.retTypeUnk(retVal.getText()));
 			} else if (!wantType.equals(gotType)) {
-				addError(retVal.start, errorMsg.retTypeWrong(gotType.toString(), currentFun, wantType.toString()));
+				addLongError(retVal, errorMsg.retTypeWrong(gotType.toString(), currentFun, wantType.toString()));
 			}
 		}
 	}
@@ -413,24 +417,23 @@ class validateListener extends simpleBaseListener{
 			if (acc.var_name() != null) {
 				typeVisitor.dataType varType = typeChecker.visitVar_name(acc.var_name());
 				Token name = acc.var_name().NAME().getSymbol();
-				if (!varType.isNumber()) addError(name, errorMsg.accNotNum(varType.toString()));
-				else if (strType.isKit()) addError(name, errorMsg.accKitDynamic());
+				if (!varType.isNumber()) errors.add(new Error(name, errorMsg.accNotNum(varType.toString())));
+				else if (strType.isKit()) errors.add(new Error(name, errorMsg.accKitDynamic()));
 				else {
 					Information initInfo = getVariable(name.getText());
-					if (initInfo != null && initInfo.isNotInit()) addError(name, errorMsg.varNoValue(name.getText()));
+					if (initInfo != null && initInfo.isNotInit()) errors.add(new Error(name, errorMsg.varNoValue(name.getText())));
 				}
 			} else if (acc.reserved() != null){
-				if(strType.isKit()) addError(ctx.var_name().NAME().getSymbol(), errorMsg.accKitDynamic());
-				else if (acc.reserved().RANDOM() != null) addError(acc.reserved().RANDOM().getSymbol(),
-																	errorMsg.accRandom());
+				if(strType.isKit()) addLongError(acc.reserved(), errorMsg.accKitDynamic());
+				else if (acc.reserved().RANDOM() != null) errors.add(new Error(acc.reserved().RANDOM().getSymbol(), errorMsg.accRandom()));
 			} else if (acc.NUM() != null) {
 				int position = Integer.parseInt(acc.NUM().getText());
-				if (position < 1) addError(acc.NUM().getSymbol(), errorMsg.accUnderSize(position));
+				if (position < 1) errors.add(new Error(acc.NUM().getSymbol(), errorMsg.accUnderSize(position)));
 				if (!strType.isList()){
 					int size = strType.isSequence() ?
 								Integer.parseInt(((typeVisitor.seqType) strType).getSize()):
 								((typeVisitor.kitType) strType).getFieldTypes().size();
-					if (position > size) addError(acc.NUM().getSymbol(), errorMsg.accOverSize(position, size));
+					if (position > size) errors.add(new Error(acc.NUM().getSymbol(), errorMsg.accOverSize(position, size)));
 				}
 			} else if (acc.NAME() != null) {
 				Token fieldName = acc.NAME().getSymbol();
@@ -441,10 +444,10 @@ class validateListener extends simpleBaseListener{
 						List<String> options = fieldStr.length() > 1 && !kitFields.isEmpty() ?
 												findSimilar(fieldStr, kitFields) :
 												new ArrayList<>();
-						addError(fieldName, errorMsg.accKitNoField(fieldStr, ctx.var_name().NAME().getText(), options));
+						errors.add(new Error(fieldName, errorMsg.accKitNoField(fieldStr, ctx.var_name().NAME().getText(), options)));
 					}
 				}
-				else if (!strType.isWildcard()) addError(fieldName, errorMsg.accNotKit(strType.toString()));
+				else if (!strType.isWildcard()) errors.add(new Error(fieldName, errorMsg.accNotKit(strType.toString())));
 			}
 		}
 	}
@@ -465,12 +468,12 @@ class validateListener extends simpleBaseListener{
 		Token name = def.NAME().getSymbol();
 		String nameStr = name.getText();
 		Information var = getVariable(nameStr);
-		if(var != null) addError(name, errorMsg.varAlreadyExist(nameStr, var.getLine()));
+		if(var != null) errors.add(new Error(name, errorMsg.varAlreadyExist(nameStr, var.getLine())));
 		else {
 			typeVisitor.dataType type = typeChecker.visitType(def.type());
-			if (type.isUnknown()) addError(def.type().start, errorMsg.varTypeUnk(def.type().getText(), nameStr));
+			if (type.isUnknown()) addLongError(def.type(), errorMsg.varTypeUnk(def.type().getText(), nameStr));
 			else {
-				Information varInfo = new Information(type, name.getLine());
+				Information varInfo = new Information(type, name);
 				if (ctx.var_init() != null) {
 					simpleParser.Direct_valueContext dv = ctx.var_init().direct_value();
 					typeVisitor.dataType initType;
@@ -480,10 +483,9 @@ class validateListener extends simpleBaseListener{
 						simpleParser.VariableContext initVar = dv.variable();
 						if(initVar != null) varHasValueCheck(initVar);
 					}
-					if (initType.isUnknown()) addError(dv.start, errorMsg.varInitTypeUnk(dv.getText(), nameStr));
+					if (initType.isUnknown()) addLongError(dv, errorMsg.varInitTypeUnk(dv.getText(), nameStr));
 					else if (!type.equals(initType)){
-						addError(def.PREPARE().getSymbol(), errorMsg.varInitTypeWrong(type.toString(),
-																						initType.toString()));
+						addLongError(ctx.var_init(), errorMsg.varInitTypeWrong(type.toString(), initType.toString()));
 					} else {
 						varInfo.switchToInit();
 						localVars.put(nameStr, varInfo);
@@ -518,7 +520,7 @@ class validateListener extends simpleBaseListener{
 				for (Map<String, Information> vars : allVars) defined.addAll(vars.keySet());
 				suggestions = findSimilar(nameStr, defined);
 			}
-			addError(ctx.NAME().getSymbol(), errorMsg.varUndefined(nameStr, suggestions));
+			errors.add(new Error(ctx.NAME().getSymbol(), errorMsg.varUndefined(nameStr, suggestions)));
 		}
 	}
 
@@ -550,12 +552,10 @@ class validateListener extends simpleBaseListener{
 			if (twoVal != null && twoVal.variable() != null) varHasValueCheck(twoVal.variable());
 			typeVisitor.dataType oneType = typeChecker.visitComp_oprnd(one);
 			typeVisitor.dataType twoType = typeChecker.visitComp_oprnd(two);
-			if (oneType.isUnknown() && one.arith_op() == null) addError(one.start,
-																		errorMsg.operandTypeUnk(one.getText()));
-			if (twoType.isUnknown() && two.arith_op() == null) addError(two.start,
-																		errorMsg.operandTypeUnk(two.getText()));
+			if (oneType.isUnknown() && one.arith_op() == null) addLongError(one, errorMsg.operandTypeUnk(one.getText()));
+			if (twoType.isUnknown() && two.arith_op() == null) addLongError(two, errorMsg.operandTypeUnk(two.getText()));
 			if (!(oneType.isUnknown() || twoType.isUnknown()) && !oneType.equals(twoType)) {
-				addError(one.start, errorMsg.equalityTypeWrong(oneType.toString(), twoType.toString()));
+				addLongError(ctx, errorMsg.equalityTypeWrong(oneType.toString(), twoType.toString()));
 			}
 		}
 	}
@@ -564,19 +564,22 @@ class validateListener extends simpleBaseListener{
 	public void exitFile(simpleParser.FileContext ctx) {
 		localsUsageCheck();
 		types.forEach((name, info)-> {
-			if(info.isNotUsed()) errors.add(new Error(info.getLine(), 0, errorMsg.typeUnused(name, info.getLine())));
+			if(info.isNotUsed()) errors.add(new Error(info.reference, errorMsg.typeUnused(name, info.getLine())));
 		});
 		String mainFunc = simpleLexer.VOCABULARY.getLiteralName(simpleParser.MAIN).replace("'", "");
 		functions.forEach((name, info) -> {
 			if(info.getUnused() && !name.equals(mainFunc)) {
-				errors.add(new Error(info.getLine(), 0, errorMsg.funUnused(name, info.getLine())));
+				errors.add(new Error(info.reference, errorMsg.funUnused(name, info.getLine())));
 			}
 		});
 		if (errors.isEmpty()) validationOk = true;
 		else {
-			errors.sort(Comparator.comparingInt(e -> e.line));
-			System.out.println("\nError" + (errors.size() > 1 ? "s" : "") + ":");
-			for (Error err : errors) System.out.println(err.toString());
+			errors.sort(Comparator.<Error>comparingInt(e -> e.offender().getLine())
+					.thenComparingInt(e -> e.offender().getCharPositionInLine()));
+			TokenSource src = recognizer.getInputStream().getTokenSource();
+			Token dummy = recognizer.getTokenFactory().create(new Pair<>(src, src.getInputStream()), -1, "", 0, -1, -1, -1, -1);
+			recognizer.notifyErrorListeners(dummy,"\nError" + (errors.size() > 1 ? "s" : "") + ":", null);
+			for (Error err : errors) recognizer.notifyErrorListeners(err.offender(), err.text(), null);
 		}
 	}
 	
@@ -609,9 +612,11 @@ class validateListener extends simpleBaseListener{
 		localVars.putAll(allVars.pop());
 		typeChecker.clearCache();
 	}
-	
-	private void addError(Token posRef, String msg){
-		errors.add(new Error(posRef.getLine(), posRef.getCharPositionInLine(), msg));
+
+	private void addLongError(ParserRuleContext ctx, String msg){
+		CommonToken ref = new CommonToken(ctx.start);
+		ref.setStopIndex(ctx.stop.getStopIndex());
+		errors.add(new Error(ref, msg));
 	}
 
 	private boolean checkIfContainsType(simpleParser.TypeContext ctx, String type) {
@@ -636,12 +641,12 @@ class validateListener extends simpleBaseListener{
 		Token name = fd.fun_def().name;
 		String nameStr = name.getText();
 		if (functions.containsKey(nameStr)){
-			addError(name, errorMsg.funAlreadyExist(nameStr, functions.get(nameStr).getLine()));
+			errors.add(new Error(name, errorMsg.funAlreadyExist(nameStr, functions.get(nameStr).getLine())));
 		} else {
 			simpleParser.TypeContext type = fd.fun_def().type();
 			typeVisitor.dataType retType = type != null ? typeChecker.visitType(type) : new typeVisitor.nothingType();
 			if (retType.isUnknown() && type != null){
-				addError(type.start, errorMsg.funResTypeUnk(type.getText(), nameStr));
+				addLongError(type, errorMsg.funResTypeUnk(type.getText(), nameStr));
 			} else {
 				boolean allOk = true;
 				List<typeVisitor.dataType> params = new ArrayList<>();
@@ -649,14 +654,14 @@ class validateListener extends simpleBaseListener{
 				for (simpleParser.ParamContext p : fd.fun_def().param()) {
 					typeVisitor.dataType pType = typeChecker.visitType(p.type());
 					if (pType.isUnknown()){
-						addError(p.type().start, errorMsg.funParTypeUnk(p.type().getText(), p.NAME().getText()));
+						addLongError(p.type(), errorMsg.funParTypeUnk(p.type().getText(), p.NAME().getText()));
 						allOk = false;
 					} else if (nameStr.equals(mainFunc) && (pType.isSequence() || pType.isList() || pType.isKit())){
-						addError(p.type().start, errorMsg.mainParStruct(p.NAME().getText(), p.type().getText()));
+						addLongError(p.type(), errorMsg.mainParStruct(p.NAME().getText(), p.type().getText()));
 						allOk = false;
 					} else params.add(pType);
 				}
-				if (allOk) functions.put(nameStr, new FuncInfo(retType, params, name.getLine()));
+				if (allOk) functions.put(nameStr, new FuncInfo(retType, params, name));
 			}
 		}
 	}
@@ -665,34 +670,33 @@ class validateListener extends simpleBaseListener{
 		Token name = td.TYPENAME().getSymbol();
 		String nameStr = name.getText();
 		if (types.containsKey(nameStr)){
-			addError(name, errorMsg.typeAlreadyExist(nameStr, types.get(nameStr).getLine()));
+			errors.add(new Error(name, errorMsg.typeAlreadyExist(nameStr, types.get(nameStr).getLine())));
 		} else {
 			if (checkIfContainsType(td.type(), nameStr)) {
 				if(td.type().struct_type() != null && td.type().struct_type().kit_type() != null){
-					types.put(nameStr, new Information(null, 0));
+					types.put(nameStr, new Information(null, null));
 					typeVisitor.dataType type = typeChecker.visitType(td.type());
 					if (type.isUnknown()) {
-						addError(td.type().start, errorMsg.typeDefUnk(type.toString()));
+						addLongError(td.type(), errorMsg.typeDefUnk(type.toString()));
 						types.remove(nameStr);
 					} else {
-						typeVisitor.recursiveType newType = new typeVisitor.recursiveType(nameStr,
-																							(typeVisitor.kitType) type);
+						typeVisitor.recursiveType newType = new typeVisitor.recursiveType(nameStr, (typeVisitor.kitType) type);
 						newType.settleRecursion();
-						types.put(nameStr, new Information(newType, name.getLine()));
+						types.put(nameStr, new Information(newType, name));
 					}
 				}
-				else addError(td.type().start, errorMsg.typeDefRecInvalid(nameStr));
+				else addLongError(td.type(), errorMsg.typeDefRecInvalid(nameStr));
 			} else {
 				typeVisitor.dataType type = typeChecker.visitType(td.type());
-				if (type.isUnknown()) addError(td.type().start, errorMsg.typeDefUnk(type.toString()));
-				else types.put(nameStr, new Information(new typeVisitor.customType(nameStr, type), name.getLine()));
+				if (type.isUnknown()) addLongError(td.type(), errorMsg.typeDefUnk(type.toString()));
+				else types.put(nameStr, new Information(new typeVisitor.customType(nameStr, type), name));
 			}
 		}
 	}
 	
 	private void condTypeCheck(String condUse, simpleParser.ConditionContext condition) {
 		if (typeChecker.visitCondition(condition).isUnknown()){
-			addError(condition.start, errorMsg.condTypeUnk(condUse, condition.getText()));
+			addLongError(condition, errorMsg.condTypeUnk(condUse, condition.getText()));
 		}
 	}
 
@@ -732,7 +736,7 @@ class validateListener extends simpleBaseListener{
 	
 	private void localsUsageCheck(){
 		localVars.forEach((name, info)-> {
-			if(info.isNotUsed()) errors.add(new Error(info.getLine(), 0, errorMsg.varUnused(name)));
+			if(info.isNotUsed()) errors.add(new Error(info.reference, errorMsg.varUnused(name)));
 		});
 	}
 	
@@ -760,27 +764,27 @@ class validateListener extends simpleBaseListener{
 		}
 		if (operandType != null){
 			if (operandType.isUnknown()) {
-				if (notOperation) addError(operand.start, errorMsg.operandTypeUnk(operand.getText()));
+				if (notOperation) addLongError(operand, errorMsg.operandTypeUnk(operand.getText()));
 			} else if (invalidType) {
-				addError(operand.start, errorMsg.operandTypeWrong(operandType.toString(), operationKind));
+				addLongError(operand, errorMsg.operandTypeWrong(operandType.toString(), operationKind));
 			}
 		}
 	}
 
 	private void structHasValueCheck(Token name) {
 		Information info = getVariable(name.getText());
-		if (info != null && info.isNotInit()) addError(name, errorMsg.structNoValue(name.getText()));
+		if (info != null && info.isNotInit()) errors.add(new Error(name, errorMsg.structNoValue(name.getText())));
 	}
 
 	private void structLitTypesCheck(List<simpleParser.LiteralContext> lvs, String structKind) {
 		typeVisitor.dataType foundType = null;
 		for(simpleParser.LiteralContext lv : lvs){
 			typeVisitor.dataType ddv = typeChecker.visitLiteral(lv);
-			if (ddv.isUnknown()) addError(lv.start, errorMsg.litStructTypeUnk(lv.getText(), structKind));
+			if (ddv.isUnknown()) addLongError(lv, errorMsg.litStructTypeUnk(lv.getText(), structKind));
 			if (!ddv.isNothing()){
 				if(foundType == null) foundType = ddv;
 				else if(!ddv.equals(foundType)){
-					addError(lv.start, errorMsg.litStructTypeMixed(structKind, foundType.toString(), ddv.toString()));
+					addLongError(lv, errorMsg.litStructTypeMixed(structKind, foundType.toString(), ddv.toString()));
 					break;
 				}
 			}
@@ -792,7 +796,7 @@ class validateListener extends simpleBaseListener{
 						var.var_name().NAME().getSymbol() :
 						var.struct_access().var_name().NAME().getSymbol();
 		Information info = getVariable(varName.getText());
-		if (info != null && info.isNotInit()) addError(varName, errorMsg.varNoValue(varName.getText()));
+		if (info != null && info.isNotInit()) errors.add(new Error(varName, errorMsg.varNoValue(varName.getText())));
 	}
 
 	public boolean validateProgramArgs(List<typeVisitor.dataType> args){
@@ -808,19 +812,19 @@ class validateListener extends simpleBaseListener{
 
 	private void varListTextCheck(simpleParser.VariableContext var, Function<String, String> notTextListMsg) {
 		typeVisitor.dataType varType = typeChecker.visitVariable(var);
-		if (varType.isUnknown()) addError(var.start, errorMsg.varTypeUnk(varType.toString(), var.getText()));
+		if (varType.isUnknown()) errors.add(new Error(var.start, errorMsg.varTypeUnk(varType.toString(), var.getText())));
 		else if (!(varType.isList() && ((typeVisitor.listType) varType).getInnerType().isText())){
-			addError(var.start, notTextListMsg.apply(varType.toString()));
+			addLongError(var, notTextListMsg.apply(varType.toString()));
 		}
 	}
 
 	private boolean varStructTypeCheck(simpleParser.Var_nameContext varName, Function<String, String> notStructTypeMsg){
 		typeVisitor.dataType structType = typeChecker.visitVar_name(varName);
 		if (structType.isUnknown()){
-			addError(varName.NAME().getSymbol(), errorMsg.structTypeUnk(varName.NAME().getSymbol().getText()));
+			errors.add(new Error(varName.NAME().getSymbol(), errorMsg.structTypeUnk(varName.NAME().getSymbol().getText())));
 			return false;
 		} else if (!(structType.isSequence() || structType.isList() || structType.isKit() || structType.isWildcard())){
-			addError(varName.NAME().getSymbol(), notStructTypeMsg.apply(structType.toString()));
+			errors.add(new Error(varName.NAME().getSymbol(), notStructTypeMsg.apply(structType.toString())));
 			return false;
 		}
 		return true;
@@ -828,7 +832,7 @@ class validateListener extends simpleBaseListener{
 
 	private void varTextTypeCheck(simpleParser.VariableContext var, Function<String, String> notTextMsg) {
 		typeVisitor.dataType varType = typeChecker.visitVariable(var);
-		if (varType.isUnknown()) addError(var.start, errorMsg.varTypeUnk(varType.toString(), var.getText()));
-		else if (!varType.isText()) addError(var.start, notTextMsg.apply(varType.toString()));
+		if (varType.isUnknown()) addLongError(var, errorMsg.varTypeUnk(varType.toString(), var.getText()));
+		else if (!varType.isText()) addLongError(var, notTextMsg.apply(varType.toString()));
 	}
 }

@@ -72,7 +72,7 @@ class errorRuntimeMsg {
 				". Program may be stuck in an infinite call loop.";
 	}
 
-	public static String unexpectedInputRequest() {
-		return prefix + "Unable to determine expected type from input. Missing record from validation.";
+	public static String unexpectedInputRequest(int line) {
+		return prefix + "Unable to determine expected type from input at line " + line + ". Missing record from validation.";
 	}
 }

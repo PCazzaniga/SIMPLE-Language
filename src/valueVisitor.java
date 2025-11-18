@@ -17,13 +17,20 @@
  *     along with SIMPLE.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import org.antlr.v4.runtime.CommonToken;
+import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.ParserRuleContext;
+
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.regex.Pattern;
 
 class valueVisitor extends simpleBaseVisitor<valueVisitor.Val> {
+
+	private final Parser recognizer;
 
 	private final Random rng = new Random();
 
@@ -249,7 +256,8 @@ class valueVisitor extends simpleBaseVisitor<valueVisitor.Val> {
 		}
 	}
 	
-	public valueVisitor(Map<String, Val> localVars, Deque<Map<String, Val>> allVars) {
+	public valueVisitor(Parser recognizer, Map<String, Val> localVars, Deque<Map<String, Val>> allVars) {
+		this.recognizer = recognizer;
 		this.localVars = localVars;
 		this.allVars = allVars;
 	}
@@ -272,16 +280,14 @@ class valueVisitor extends simpleBaseVisitor<valueVisitor.Val> {
 			case simpleParser.MULT -> new numberVal(first.val() * second.val());
 			case simpleParser.DIV -> {
 				if (second.equals(new numberVal(0))) {
-					String msg = "line " + ctx.start.getLine() + ":" + ctx.ar_oprnd(0).start.getStartIndex() + " ";
-					System.out.println(msg + errorRuntimeMsg.divisionByZero());
+					signalError(ctx.ar_oprnd(1), errorRuntimeMsg.divisionByZero());
 					System.exit(1);
 				}
 				yield new numberVal(first.val() / second.val());
 			}
 			default -> {
 				if (second.equals(new numberVal(0))) {
-					String msg = "line " + ctx.start.getLine() + ":" + ctx.ar_oprnd(0).start.getStartIndex() + " ";
-					System.out.println(msg + errorRuntimeMsg.modulusByZero());
+					signalError(ctx.ar_oprnd(1), errorRuntimeMsg.modulusByZero());
 					System.exit(1);
 				}
 				yield new numberVal(first.val() % second.val());
@@ -366,13 +372,11 @@ class valueVisitor extends simpleBaseVisitor<valueVisitor.Val> {
 		else if (acc.var_name() != null) position = (int) ((numberVal) visitVar_name(acc.var_name())).val();
 		else position = (int) ((numberVal) visitReserved(acc.reserved())).val();
 		if (position < 1) {
-			String msg = "line " + acc.start.getLine() + ":" + acc.start.getStartIndex() + " ";
-			System.out.println(msg + errorRuntimeMsg.accessUnderSize(position));
+			signalError(acc, errorRuntimeMsg.accessUnderSize(position));
 			System.exit(1);
 		}
 		if (position > st.size()) {
-			String msg = "line " + acc.start.getLine() + ":" + acc.start.getCharPositionInLine() + " ";
-			System.out.println(msg + errorRuntimeMsg.accessOverSize(position, st.size()));
+			signalError(acc, errorRuntimeMsg.accessOverSize(position, st.size()));
 			System.exit(1);
 		}
 		return st.getAt(position - 1);
@@ -408,15 +412,15 @@ class valueVisitor extends simpleBaseVisitor<valueVisitor.Val> {
 	
 	private String cleanUpTextLit(String text){
 		String clean = text.substring(1, text.length() - 1)
-								.replace("\\\\", "\\")
-								.replace("\\t", "\t")
-								.replace("\\b", "\b")
-								.replace("\\n", "\n")
-								.replace("\\r", "\r")
-								.replace("\\f", "\f")
-								.replace("\\\"", "\"")
-								.replace("\\x5C", "\\")
-								.replace("\\x24", "$");
+				.replace("\\\\", "\\")
+				.replace("\\t", "\t")
+				.replace("\\b", "\b")
+				.replace("\\n", "\n")
+				.replace("\\r", "\r")
+				.replace("\\f", "\f")
+				.replace("\\\"", "\"")
+				.replace("\\x5C", "\\")
+				.replace("\\x24", "$");
 		Pattern asciiEsc = Pattern.compile("\\\\x([0-9a-fA-F]{2})");
 		return asciiEsc.matcher(clean).replaceAll(match -> String.valueOf((char) Integer.parseInt(match.group(1), 16)));
 	}
@@ -427,5 +431,11 @@ class valueVisitor extends simpleBaseVisitor<valueVisitor.Val> {
 			if (higher.containsKey(name)) return higher.get(name);
 		}
 		return new nothingVal();
+	}
+
+	private void signalError(ParserRuleContext ctx, String msg){
+		CommonToken ref = new CommonToken(ctx.start);
+		ref.setStopIndex(ctx.stop.getStopIndex());
+		recognizer.notifyErrorListeners(ref, msg, null);
 	}
 }
