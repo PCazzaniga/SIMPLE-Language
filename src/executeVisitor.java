@@ -460,7 +460,7 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 	private void runQuantLoop(simpleParser.Direct_valueContext dv, simpleParser.Scope_blockContext block) {
 		int limit = (int) ((valueVisitor.numberVal) eval.visitDirect_value(dv)).val();
 		if (limit < 0){
-			System.out.println("line " + dv.start.getLine() + " " + errorRuntimeMsg.loopNegative(limit));
+			signalLongError(dv, errorRuntimeMsg.loopNegative(limit));
 			System.exit(1);
 		}
 		String counter = simpleLexer.VOCABULARY.getLiteralName(simpleParser.COUNTER).replace("'", "");
