@@ -187,7 +187,7 @@ public class simpleInterpreter {
 			String logo =
 					"""
 					\t  _____
-					\t / ____|_		   _
+					\t / ____|_		  _
 					\t| (___ (_)_ __ ___  _ __ | | ___
 					\t \\___ \\| | '_ ` _ \\| '_ \\| |/ _ \\
 					\t ____) | | | | | | | |_) | |  __/
@@ -204,7 +204,7 @@ public class simpleInterpreter {
 		private static void printHelp(){
 			String helpMsg =
 					"""
-					SIMPLE v1.2.1 Copyright (C) 2025 PCazzaniga (github.com)
+					SIMPLE v1.3.0 Copyright (C) 2025 PCazzaniga (github.com)
 					This program is distributed under the GNU General Public License Version 3
 					
 					Interpreter for the S.I.M.P.L.E. programming language, validates and optionally executes a .simple file.
