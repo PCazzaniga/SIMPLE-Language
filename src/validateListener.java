@@ -576,9 +576,6 @@ class validateListener extends simpleBaseListener{
 		else {
 			errors.sort(Comparator.<Error>comparingInt(e -> e.offender().getLine())
 					.thenComparingInt(e -> e.offender().getCharPositionInLine()));
-			TokenSource src = recognizer.getInputStream().getTokenSource();
-			Token dummy = recognizer.getTokenFactory().create(new Pair<>(src, src.getInputStream()), -1, "", 0, -1, -1, -1, -1);
-			recognizer.notifyErrorListeners(dummy,"\nError" + (errors.size() > 1 ? "s" : "") + ":", null);
 			for (Error err : errors) recognizer.notifyErrorListeners(err.offender(), err.text(), null);
 		}
 	}

@@ -54,7 +54,10 @@ public class simpleInterpreter {
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		simpleParser parser = new simpleParser(tokens);
 		parser.removeErrorListeners();
-		parser.addErrorListener(new simpleErrorListener(parser));
+		simpleErrorListener el = new simpleErrorListener(parser);
+		parser.addErrorListener(el);
+		simpleErrorStrategy handler = new simpleErrorStrategy();
+		parser.setErrorHandler(handler);
 		simpleParser.FileContext fileTree = parser.file();
 
 		if (parser.getNumberOfSyntaxErrors() < 1){
@@ -73,6 +76,7 @@ public class simpleInterpreter {
 					System.out.println("Invalid CL call");
 				} else if (argsIn.execOpt) {
 					if (validator.validateProgramArgs(argsIn.programArgs.stream().map(inputHandler::typeOfLiteral).collect(Collectors.toList()))) {
+						el.showCounter(false);
 						executeVisitor.Builder execB = new executeVisitor.Builder(parser);
 						execB.setExpectedInputs(validator.getRuntimeInputs());
 						execB.setProgramArgs(argsIn.programArgs.stream().map(inputHandler::valOfLiteral).collect(Collectors.toList()));
@@ -183,7 +187,7 @@ public class simpleInterpreter {
 			String logo =
 					"""
 					\t  _____
-					\t / ____|_		   _
+					\t / ____|_		  _
 					\t| (___ (_)_ __ ___  _ __ | | ___
 					\t \\___ \\| | '_ ` _ \\| '_ \\| |/ _ \\
 					\t ____) | | | | | | | |_) | |  __/
@@ -200,7 +204,7 @@ public class simpleInterpreter {
 		private static void printHelp(){
 			String helpMsg =
 					"""
-					SIMPLE v1.2.1 Copyright (C) 2025 PCazzaniga (github.com)
+					SIMPLE v1.3.0 Copyright (C) 2025 PCazzaniga (github.com)
 					This program is distributed under the GNU General Public License Version 3
 					
 					Interpreter for the S.I.M.P.L.E. programming language, validates and optionally executes a .simple file.
