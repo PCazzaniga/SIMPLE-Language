@@ -54,7 +54,10 @@ public class simpleInterpreter {
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		simpleParser parser = new simpleParser(tokens);
 		parser.removeErrorListeners();
-		parser.addErrorListener(new simpleErrorListener(parser));
+		simpleErrorListener el = new simpleErrorListener(parser);
+		parser.addErrorListener(el);
+		simpleErrorStrategy handler = new simpleErrorStrategy();
+		parser.setErrorHandler(handler);
 		simpleParser.FileContext fileTree = parser.file();
 
 		if (parser.getNumberOfSyntaxErrors() < 1){
@@ -73,6 +76,7 @@ public class simpleInterpreter {
 					System.out.println("Invalid CL call");
 				} else if (argsIn.execOpt) {
 					if (validator.validateProgramArgs(argsIn.programArgs.stream().map(inputHandler::typeOfLiteral).collect(Collectors.toList()))) {
+						el.showCounter(false);
 						executeVisitor.Builder execB = new executeVisitor.Builder(parser);
 						execB.setExpectedInputs(validator.getRuntimeInputs());
 						execB.setProgramArgs(argsIn.programArgs.stream().map(inputHandler::valOfLiteral).collect(Collectors.toList()));
