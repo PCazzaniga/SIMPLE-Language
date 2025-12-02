@@ -26,6 +26,8 @@ import org.antlr.v4.runtime.Token;
 public class simpleErrorListener extends BaseErrorListener {
 
     private final String[] lines;
+    private int counter = 0;
+    private boolean counterOn = true;
 
     public simpleErrorListener(Parser recognizer) {
         lines = recognizer.getInputStream().getTokenSource().getInputStream().toString().split("\n");
@@ -33,7 +35,11 @@ public class simpleErrorListener extends BaseErrorListener {
 
     @Override
     public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-        if (line > 0) System.out.print("line " + line + ":" + charPositionInLine + " ");
+        if (counterOn){
+            counter++;
+            System.out.print("Error #" + counter + (line > 0 ? " - " : "\n"));
+        }
+        if (line > 0) System.out.println("line " + line + ":" + charPositionInLine + " ");
         System.out.println(msg);
         if (line > 0 && line <= lines.length){
             String errorLine = lines[line - 1].stripLeading();
@@ -48,5 +54,9 @@ public class simpleErrorListener extends BaseErrorListener {
                 System.out.println("\n");
             }
         }
+    }
+
+    public void showCounter(boolean state){
+        counterOn = state;
     }
 }
