@@ -398,6 +398,9 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 			recognizer.notifyErrorListeners(dummy, errorRuntimeMsg.unexpectedInputRequest(line), null);
 			System.exit(1);
 		}
+		Thread inputInterruptedShutdown = new Thread(() ->
+				recognizer.notifyErrorListeners(dummy, errorRuntimeMsg.inputInterrupted(), null));
+		Runtime.getRuntime().addShutdownHook(inputInterruptedShutdown);
 		Scanner sc = new Scanner(System.in);
 		for(int i = 0; i < MAX_LOOP; i++){
 			if (sc.hasNextLine()){
@@ -406,15 +409,18 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 				simpleRTLitParser.LiteralContext inputLit = runtimeParser.literal();
 				if (runtimeParser.getNumberOfSyntaxErrors() < 1) {
 					typeVisitor.dataType gotType = inputHandler.typeOfLiteral(inputLit);
-					if (gotType.equals(runtimeInputs.get(line))) return inputHandler.valOfLiteral(inputLit);
+					if (gotType.equals(runtimeInputs.get(line))) {
+						Runtime.getRuntime().removeShutdownHook(inputInterruptedShutdown);
+						return inputHandler.valOfLiteral(inputLit);
+					}
 					recognizer.notifyErrorListeners(dummy, errorRuntimeMsg.inputMismatchedType(gotType, runtimeInputs.get(line)), null);
 				}
 				if (i < MAX_LOOP - 1) recognizer.notifyErrorListeners(dummy, errorRuntimeMsg.inputAgain(), null);
 			} else {
-				recognizer.notifyErrorListeners(dummy, errorRuntimeMsg.inputInterrupted(), null);
 				System.exit(1);
 			}
 		}
+		Runtime.getRuntime().removeShutdownHook(inputInterruptedShutdown);
 		recognizer.notifyErrorListeners(dummy, errorRuntimeMsg.inputTooManyAttempts(MAX_LOOP), null);
 		System.exit(1);
 		return new valueVisitor.nothingVal();	
@@ -502,7 +508,7 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 			if(strAcc.access().NAME() != null){
 				((valueVisitor.kitVal) sv).setAtField(strAcc.access().NAME().getText(), newVal);
 			} else {
-				int pos = getPosition(strAcc, sv.size());
+				int pos = getPosition(strAcc, (sv instanceof valueVisitor.listVal ? sv.size() + 1 : sv.size()));
 				sv.setAt(pos - 1, newVal);
 			}
 		}
