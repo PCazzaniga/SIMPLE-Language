@@ -151,7 +151,7 @@ class simpleErrorStrategy extends DefaultErrorStrategy{
                     case simpleParser.DEFINE -> "Function declaration";
                     case simpleParser.RESULT -> "Function result";
                     case simpleParser.PARAMS,
-                         simpleParser.PARAMS2 -> "Function parameters";
+                         simpleParser.PARAMS_ONLY -> "Function parameters";
                     case simpleParser.IF -> "Conditional statement";
                     case simpleParser.THEN -> "Statement entry";
                     case simpleParser.ELSEIF,
