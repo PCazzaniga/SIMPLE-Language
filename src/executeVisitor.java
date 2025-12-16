@@ -286,7 +286,11 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 	public Void visitListInsertion(simpleParser.ListInsertionContext ctx) {
 		List<valueVisitor.Val> list = ((valueVisitor.listVal) eval.visitVar_name(ctx.struct_access().var_name())).vals();
 		int position = getPosition(ctx.struct_access(), list.size() + 1);
-		list.add(position - 1, eval.visitDirect_value(ctx.direct_value()));
+		valueVisitor.Val val = eval.visitDirect_value(ctx.direct_value());
+		if (val instanceof valueVisitor.structVal && ctx.direct_value().variable() != null){
+			val = ((valueVisitor.structVal) val).makeCopy();
+		}
+		list.add(position - 1, val);
 		return null;
 	}
 
@@ -508,7 +512,7 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 			if(strAcc.access().NAME() != null){
 				((valueVisitor.kitVal) sv).setAtField(strAcc.access().NAME().getText(), newVal);
 			} else {
-				int pos = getPosition(strAcc, (sv instanceof valueVisitor.listVal ? sv.size() + 1 : sv.size()));
+				int pos = getPosition(strAcc, sv.size());
 				sv.setAt(pos - 1, newVal);
 			}
 		}
