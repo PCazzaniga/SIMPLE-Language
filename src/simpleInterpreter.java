@@ -50,6 +50,10 @@ public class simpleInterpreter {
 			System.out.println("Failed to read input file.");
 			System.exit(1);
 		}
+
+		argsList.remove(0);
+		argsInterpreter argsIn = new argsInterpreter(argsList);
+
 		simpleLexer lexer = new simpleLexer(input);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		simpleParser parser = new simpleParser(tokens);
@@ -61,9 +65,6 @@ public class simpleInterpreter {
 		simpleParser.FileContext fileTree = parser.file();
 
 		if (parser.getNumberOfSyntaxErrors() < 1){
-
-			argsList.remove(0);
-			argsInterpreter argsIn = new argsInterpreter(argsList);
 
 			ParseTreeWalker walker = new ParseTreeWalker();
 
@@ -167,8 +168,7 @@ public class simpleInterpreter {
 						break;
 					default:
 						System.out.println("Unknown option " + arg + ". Use --help to view all options.");
-						validOpts = false;
-						ignoreRest = true;
+						System.exit(1);
 				}
 				if (ignoreRest) break;
 			}
