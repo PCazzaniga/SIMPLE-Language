@@ -508,7 +508,7 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 			if(strAcc.access().NAME() != null){
 				((valueVisitor.kitVal) sv).setAtField(strAcc.access().NAME().getText(), newVal);
 			} else {
-				int pos = getPosition(strAcc, (sv instanceof valueVisitor.listVal ? sv.size() + 1 : sv.size()));
+				int pos = getPosition(strAcc, sv.size());
 				sv.setAt(pos - 1, newVal);
 			}
 		}
