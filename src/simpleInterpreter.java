@@ -57,27 +57,43 @@ public class simpleInterpreter {
 		simpleLexer lexer = new simpleLexer(input);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		simpleParser parser = new simpleParser(tokens);
-		parser.removeErrorListeners();
-		simpleErrorListener el = new simpleErrorListener(parser);
-		parser.addErrorListener(el);
-		simpleErrorStrategy handler = new simpleErrorStrategy();
-		parser.setErrorHandler(handler);
+
+		simpleErrorListener el = null;
+		if(!argsIn.minimalOpt){
+			parser.removeErrorListeners();
+			el = new simpleErrorListener(parser);
+			parser.addErrorListener(el);
+			simpleErrorStrategy handler = new simpleErrorStrategy();
+			parser.setErrorHandler(handler);
+		}
+
 		simpleParser.FileContext fileTree = parser.file();
 
 		if (parser.getNumberOfSyntaxErrors() < 1){
 
 			ParseTreeWalker walker = new ParseTreeWalker();
 
-			validateListener validator = new validateListener(parser);
+			validateListener validator;
+
+			if(!argsIn.minimalOpt){
+				nodeCounter nC = new nodeCounter();
+				walker.walk(nC, fileTree);
+				validator = new validateListenerWithBar(parser, nC.getCount());
+			}else{
+				validator = new validateListener(parser);
+			}
+
 			walker.walk(validator, fileTree);
 
 			if (validator.isValidationOk()){
-				System.out.println("Validation successful");
+				if(!(argsIn.minimalOpt && argsIn.execOpt)) System.out.println("Validation successful");
 				if(!argsIn.validOpts){
 					System.out.println("Invalid CL call");
 				} else if (argsIn.execOpt) {
 					if (validator.validateProgramArgs(argsIn.programArgs.stream().map(inputHandler::typeOfLiteral).collect(Collectors.toList()))) {
-						el.showCounter(false);
+						if(el != null){
+							el.showCounter(false);
+						}
 						executeVisitor.Builder execB = new executeVisitor.Builder(parser);
 						execB.setExpectedInputs(validator.getRuntimeInputs());
 						execB.setProgramArgs(argsIn.programArgs.stream().map(inputHandler::valOfLiteral).collect(Collectors.toList()));
@@ -96,14 +112,13 @@ public class simpleInterpreter {
 			} else {
 				System.out.println("Validation failed");
 			}
-		} else {
-			System.out.println(parser.getNumberOfSyntaxErrors());
 		}
 	}
 
 	private static class argsInterpreter{
 		boolean execOpt = false;
 		boolean validOpts = true;
+		boolean minimalOpt = false;
 		int loopLimit = 0;
 		int recLimit = 0;
 		final List<simpleRTLitParser.LiteralContext> programArgs = new ArrayList<>();
@@ -143,6 +158,10 @@ public class simpleInterpreter {
 							validOpts = false;
 							ignoreRest = true;
 						}
+						break;
+					case "-m": case "--minimal":
+						itr.remove();
+						minimalOpt = true;
 						break;
 					case "-r": case "--recursion":
 						itr.remove();
@@ -204,7 +223,7 @@ public class simpleInterpreter {
 		private static void printHelp(){
 			String helpMsg =
 					"""
-					SIMPLE v1.3.3 Copyright (C) 2025 PCazzaniga (github.com)
+					SIMPLE v1.4.0 Copyright (C) 2025 PCazzaniga (github.com)
 					This program is distributed under the GNU General Public License Version 3
 					
 					Interpreter for the S.I.M.P.L.E. programming language, validates and optionally executes a .simple file.
@@ -218,6 +237,7 @@ public class simpleInterpreter {
 					\t-a, --args\t\tUse anything after this as program arguments
 					\t-e, --execute\t\tExecute file after (successful) validation
 					\t-l, --loop\t\tSet custom iteration limit for conditional loops during execution
+					\t-m, --minimal\t\tReduce interpreter output during parsing and validation
 					\t-r, --recursion\t\tSet custom recursion limit for functions during execution
 					\t-s, --simple\t\tPrint a cool ASCII logo instead of running the interpreter :)\t*
 					

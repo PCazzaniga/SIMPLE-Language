@@ -32,6 +32,7 @@ The `simplexe` command has several options that can be entered alongside it, aft
 - `--args` To pass anything after it as arguments for the [Main](manual.md#main) function of the program.
 - `--execute` To execute the .simple file after its validation.
 - `--loop` To set the maximum times conditional [loops](manual.md#loop-statement) can iterate. Default is 100.
+- `--minimal` To reduce the amount of output produced by the interpreter and not by the program itself.
 - `--recursion` To set the maximum times functions can be [called](manual.md#function-call) concurrently. Default is 100.
 
 All options have both longhand and shorthand versions, e.g. `--help` can also be used as `-h`.  
