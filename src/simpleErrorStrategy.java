@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
 
 class simpleErrorStrategy extends DefaultErrorStrategy{
 
+    
     @Override
     protected void reportMissingToken(Parser recognizer) {
         if (!this.inErrorRecoveryMode(recognizer)) {
@@ -58,14 +59,13 @@ class simpleErrorStrategy extends DefaultErrorStrategy{
             } else {
                 Token start = e.getStartToken();
                 String from = escapeWSAndQuote(start.getText()) + " (line " + start.getLine() + ":" + start.getCharPositionInLine() + ")";
-                String to;
-                if (e.getOffendingToken().getType() == simpleParser.INDENT){
-                    to = "<indentation increase>";
-                } else if (e.getOffendingToken().getType() == simpleParser.DEDENT){
-                    to = "<indentation decrease>";
-                } else {
-                    to = escapeWSAndQuote(e.getOffendingToken().getText());
-                }
+                String to= switch (e.getOffendingToken().getType()){
+                    case simpleParser.INDENT -> "<indentation increase>";
+                    case simpleParser.DEDENT -> "<indentation decrease>";
+                    case simpleParser.NEWLINE -> "<newline>";
+                    case simpleParser.TAB -> "<tabulation>";
+                    default -> escapeWSAndQuote(e.getOffendingToken().getText());
+                };
                 msg = msg + "from " + from + " to " + to;
             }
         } else {
@@ -77,14 +77,13 @@ class simpleErrorStrategy extends DefaultErrorStrategy{
     @Override
     protected void reportInputMismatch(Parser recognizer, InputMismatchException e) {
         Token offender = e.getOffendingToken();
-        String offendStr;
-        if (offender.getType() == simpleParser.INDENT){
-            offendStr = "<indentation increase>";
-        } else if (offender.getType() == simpleParser.DEDENT){
-            offendStr = "<indentation decrease>";
-        } else {
-            offendStr = getTokenErrorDisplay(offender);
-        }
+        String offendStr= switch (offender.getType()){
+            case simpleParser.INDENT -> "<indentation increase>";
+            case simpleParser.DEDENT -> "<indentation decrease>";
+            case simpleParser.NEWLINE -> "<newline>";
+            case simpleParser.TAB -> "<tabulation>";
+            default -> getTokenErrorDisplay(offender);
+        };
         IntervalSet expecting = e.getExpectedTokens();
         String msg = "Mismatched input " + offendStr + " expecting";
         if(expecting.size() > 1){
@@ -101,14 +100,13 @@ class simpleErrorStrategy extends DefaultErrorStrategy{
         if (!this.inErrorRecoveryMode(recognizer)) {
             this.beginErrorCondition(recognizer);
             Token t = recognizer.getCurrentToken();
-            String tokenName;
-            if (t.getType() == simpleParser.INDENT){
-                tokenName = "<indentation increase>";
-            } else if (t.getType() == simpleParser.DEDENT){
-                tokenName = "<indentation decrease>";
-            } else {
-                tokenName = getTokenErrorDisplay(t);
-            }
+            String tokenName = switch (t.getType()){
+                case simpleParser.INDENT -> "<indentation increase>";
+                case simpleParser.DEDENT -> "<indentation decrease>";
+                case simpleParser.NEWLINE -> "<newline>";
+                case simpleParser.TAB -> "<tabulation>";
+                default -> getTokenErrorDisplay(t);
+            };
             IntervalSet expecting = this.getExpectedTokens(recognizer);
             String msg = "Extraneous input " + tokenName + " expecting";
             if(expecting.size() > 1){
@@ -178,12 +176,11 @@ class simpleErrorStrategy extends DefaultErrorStrategy{
                          simpleParser.KIT -> "Type";
                     case simpleParser.POSITION -> "Position";
                     case simpleParser.SIZEOF -> "Structure size";
-                    //All operators here ?
                     case simpleParser.CALL -> "Function call";
                     case simpleParser.ARGUMENTS -> "Call arguments";
                     default -> "";
                 };
-                description += (!description.isEmpty() ? " using " : "") + vocabulary.getLiteralName(type);
+                description += (!description.isEmpty() ? ", using " : "") + vocabulary.getLiteralName(type);
                 yield description;
             }
         };

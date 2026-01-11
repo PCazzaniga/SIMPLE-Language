@@ -101,7 +101,7 @@ public class simpleParser extends Parser {
 			"'Random'", "'Nothing'", "'\"'", "'\\'", "'.'", "'['", "']'", "'|'",
 			"'; '", "'{'", "'}'", "'+'", "'-'", "'*'", "'/'", "'mod'", "'and'", "'or'",
 			"'not'", "'>'", "'<'", "'='", "'Execute procedure'", "'with'", "'#'",
-			"'%%'", "'True'", "'False'", null, "'Indent'", "'Dedent'"
+			"'%%'", "'True'", "'False'"
 		};
 	}
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();
