@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 PCazzaniga (github.com)
+ * Copyright (c) 2025 - 2026 PCazzaniga (github.com)
  *
  *     simpleBaseListener.java is part of SIMPLE.
  *

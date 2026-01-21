@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 PCazzaniga (github.com)
+ * Copyright (c) 2025 - 2026 PCazzaniga (github.com)
  *
  *     simpleInterpreter.java is part of SIMPLE.
  *
@@ -223,7 +223,7 @@ public class simpleInterpreter {
 		private static void printHelp(){
 			String helpMsg =
 					"""
-					SIMPLE v1.4.1 Copyright (C) 2025 PCazzaniga (github.com)
+					SIMPLE v1.4.1 Copyright (C) 2025 - 2026 PCazzaniga (github.com)
 					This program is distributed under the GNU General Public License Version 3
 					
 					Interpreter for the S.I.M.P.L.E. programming language, validates and optionally executes a .simple file.
