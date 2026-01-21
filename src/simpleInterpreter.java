@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class simpleInterpreter {
 	public static void main(String[] args){
@@ -37,7 +36,6 @@ public class simpleInterpreter {
 
 		if(firstArg.equals("-h") || firstArg.equals("--help")) argsInterpreter.printHelp();
 		if(firstArg.equals("-s") || firstArg.equals("--simple")) argsInterpreter.printLogo();
-
 		if(!firstArg.endsWith(".simple")) {
 			System.out.println(firstArg + " is not a valid .simple file.");
 			System.exit(1);
@@ -45,7 +43,7 @@ public class simpleInterpreter {
 
 		CharStream input = null;
 		try{
-			input = CharStreams.fromFileName(argsList.get(0));
+			input = CharStreams.fromFileName(firstArg);
 		} catch (IOException e) {
 			System.out.println("Failed to read input file.");
 			System.exit(1);
@@ -57,61 +55,50 @@ public class simpleInterpreter {
 		simpleLexer lexer = new simpleLexer(input);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		simpleParser parser = new simpleParser(tokens);
-
-		simpleErrorListener el = null;
 		if(!argsIn.minimalOpt){
 			parser.removeErrorListeners();
-			el = new simpleErrorListener(parser);
-			parser.addErrorListener(el);
+			parser.addErrorListener(new simpleErrorListener(parser));
 			simpleErrorStrategy handler = new simpleErrorStrategy();
 			parser.setErrorHandler(handler);
 		}
 
 		simpleParser.FileContext fileTree = parser.file();
+		if (parser.getNumberOfSyntaxErrors() > 0) System.exit(1);
+		ParseTreeWalker walker = new ParseTreeWalker();
+		validateListener validator;
+		if(!argsIn.minimalOpt){
+			nodeCounter nC = new nodeCounter();
+			walker.walk(nC, fileTree);
+			validator = new validateListenerWithBar(parser, nC.getCount());
+		}else{
+			validator = new validateListener(parser);
+		}
+		walker.walk(validator, fileTree);
+		if (!validator.isValidationOk()) System.exit(1);
 
-		if (parser.getNumberOfSyntaxErrors() < 1){
+		if(!(argsIn.minimalOpt && argsIn.execOpt)) System.out.println("Validation successful");
 
-			ParseTreeWalker walker = new ParseTreeWalker();
+		if (argsIn.execOpt) {
 
-			validateListener validator;
-
-			if(!argsIn.minimalOpt){
-				nodeCounter nC = new nodeCounter();
-				walker.walk(nC, fileTree);
-				validator = new validateListenerWithBar(parser, nC.getCount());
-			}else{
-				validator = new validateListener(parser);
+			List<typeVisitor.dataType> pArgs = argsIn.programArgs.stream().map(inputHandler::typeOfLiteral).toList();
+			if (!validator.validateProgramArgs(pArgs)){
+				System.out.println("Invalid program arguments");
+				System.exit(1);
 			}
 
-			walker.walk(validator, fileTree);
-
-			if (validator.isValidationOk()){
-				if(!(argsIn.minimalOpt && argsIn.execOpt)) System.out.println("Validation successful");
-				if(!argsIn.validOpts){
-					System.out.println("Invalid CL call");
-				} else if (argsIn.execOpt) {
-					if (validator.validateProgramArgs(argsIn.programArgs.stream().map(inputHandler::typeOfLiteral).collect(Collectors.toList()))) {
-						if(el != null){
-							el.showCounter(false);
-						}
-						executeVisitor.Builder execB = new executeVisitor.Builder(parser);
-						execB.setExpectedInputs(validator.getRuntimeInputs());
-						execB.setProgramArgs(argsIn.programArgs.stream().map(inputHandler::valOfLiteral).collect(Collectors.toList()));
-						if(argsIn.loopLimit > 0){
-							execB.setMaxLoop(argsIn.loopLimit);
-						}
-						if (argsIn.recLimit > 0){
-							execB.setMaxRecursion(argsIn.recLimit);
-						}
-						executeVisitor executor = execB.build();
-						executor.visitFile(fileTree);
-					} else {
-						System.out.println("Invalid program arguments");
-					}
-				}
-			} else {
-				System.out.println("Validation failed");
+			if(!argsIn.minimalOpt) {
+				simpleErrorListener el = (simpleErrorListener) parser.getErrorListeners().get(0);
+				el.showCounter(false);
 			}
+
+			executeVisitor.Builder execB = new executeVisitor.Builder(parser);
+			execB.setExpectedInputs(validator.getRuntimeInputs());
+			execB.setProgramArgs(argsIn.programArgs.stream().map(inputHandler::valOfLiteral).toList());
+			if(argsIn.loopLimit > 0) execB.setMaxLoop(argsIn.loopLimit);
+			if (argsIn.recLimit > 0) execB.setMaxRecursion(argsIn.recLimit);
+			executeVisitor executor = execB.build();
+
+			executor.visitFile(fileTree);
 		}
 	}
 
