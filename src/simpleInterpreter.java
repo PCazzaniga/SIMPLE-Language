@@ -50,6 +50,33 @@ public class simpleInterpreter {
 
 		argsList.remove(0);
 		argsInterpreter argsIn = new argsInterpreter(argsList);
+		if (!argsIn.validOpts) {
+			System.out.println("Invalid command line parameters");
+			System.exit(exitCodes.INVALID_COMMAND_ARGS);
+		}
+
+		simpleSpellCheckLexer spellLexer = new simpleSpellCheckLexer(input);
+		CommonTokenStream spellTokens = new CommonTokenStream(spellLexer);
+		simpleSpellCheckParser spellParser = new simpleSpellCheckParser(spellTokens);
+		if(!argsIn.minimalOpt){
+			spellParser.removeErrorListeners();
+			spellParser.addErrorListener(new simpleErrorListener(spellParser));
+		}
+
+		simpleSpellCheckParser.FileContext spellFileTree = spellParser.file();
+		if (spellParser.getNumberOfSyntaxErrors() > 0) System.exit(exitCodes.FAILED_SPELLING_PARSE);
+
+		ParseTreeWalker walker = new ParseTreeWalker();
+		spellCheckListener speller = new spellCheckListener(spellParser);
+		walker.walk(speller, spellFileTree);
+		if(speller.foundErrors()) System.exit(exitCodes.FAILED_SPELLING_CHECK);
+
+		try{
+			input = CharStreams.fromFileName(firstArg);
+		} catch (IOException e) {
+			System.out.println("Failed to read again input file.");
+			System.exit(exitCodes.CANNOT_READ_FILE);
+		}
 
 		simpleLexer lexer = new simpleLexer(input);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -62,8 +89,8 @@ public class simpleInterpreter {
 		}
 
 		simpleParser.FileContext fileTree = parser.file();
-		if (parser.getNumberOfSyntaxErrors() > 0) System.exit(1);
-		ParseTreeWalker walker = new ParseTreeWalker();
+		if (parser.getNumberOfSyntaxErrors() > 0) System.exit(exitCodes.FAILED_PROGRAM_PARSE);
+
 		validateListener validator;
 		if(!argsIn.minimalOpt){
 			nodeCounter nC = new nodeCounter();
