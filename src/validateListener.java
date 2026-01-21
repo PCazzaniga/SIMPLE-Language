@@ -698,7 +698,7 @@ class validateListener extends simpleBaseListener{
 	}
 
 	private List<String> findSimilar(String match, List<String> options){
-		return Levenshtein.filterByMaxDistance(match, options, match.length() / 2);
+		return Levenshtein.sortByDistance(match, Levenshtein.filterByMaxDistance(match, options, match.length() / 2));
 	}
 
 	public Map<Integer, typeVisitor.dataType> getRuntimeInputs() {return runtimeInputs;}
