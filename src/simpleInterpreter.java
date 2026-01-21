@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 PCazzaniga (github.com)
+ * Copyright (c) 2025 - 2026 PCazzaniga (github.com)
  *
  *     simpleInterpreter.java is part of SIMPLE.
  *
@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class simpleInterpreter {
 	public static void main(String[] args){
@@ -34,84 +33,98 @@ public class simpleInterpreter {
 		List<String> argsList = new ArrayList<>(List.of(args));
 
 		String firstArg = argsList.get(0);
-
 		if(firstArg.equals("-h") || firstArg.equals("--help")) argsInterpreter.printHelp();
 		if(firstArg.equals("-s") || firstArg.equals("--simple")) argsInterpreter.printLogo();
-
 		if(!firstArg.endsWith(".simple")) {
 			System.out.println(firstArg + " is not a valid .simple file.");
-			System.exit(1);
+			System.exit(exitCodes.WRONG_FILE_TYPE);
 		}
 
 		CharStream input = null;
 		try{
-			input = CharStreams.fromFileName(argsList.get(0));
+			input = CharStreams.fromFileName(firstArg);
 		} catch (IOException e) {
 			System.out.println("Failed to read input file.");
-			System.exit(1);
+			System.exit(exitCodes.CANNOT_READ_FILE);
 		}
 
 		argsList.remove(0);
 		argsInterpreter argsIn = new argsInterpreter(argsList);
+		if (!argsIn.validOpts) {
+			System.out.println("Invalid command line parameters");
+			System.exit(exitCodes.INVALID_COMMAND_ARGS);
+		}
+
+		simpleSpellCheckLexer spellLexer = new simpleSpellCheckLexer(input);
+		CommonTokenStream spellTokens = new CommonTokenStream(spellLexer);
+		simpleSpellCheckParser spellParser = new simpleSpellCheckParser(spellTokens);
+		if(!argsIn.minimalOpt){
+			spellParser.removeErrorListeners();
+			spellParser.addErrorListener(new simpleErrorListener(spellParser));
+		}
+
+		simpleSpellCheckParser.FileContext spellFileTree = spellParser.file();
+		if (spellParser.getNumberOfSyntaxErrors() > 0) System.exit(exitCodes.FAILED_SPELLING_PARSE);
+
+		ParseTreeWalker walker = new ParseTreeWalker();
+		spellCheckListener speller = new spellCheckListener(spellParser);
+		walker.walk(speller, spellFileTree);
+		if(speller.foundErrors()) System.exit(exitCodes.FAILED_SPELLING_CHECK);
+
+		try{
+			input = CharStreams.fromFileName(firstArg);
+		} catch (IOException e) {
+			System.out.println("Failed to read again input file.");
+			System.exit(exitCodes.CANNOT_READ_FILE);
+		}
 
 		simpleLexer lexer = new simpleLexer(input);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		simpleParser parser = new simpleParser(tokens);
-
-		simpleErrorListener el = null;
 		if(!argsIn.minimalOpt){
 			parser.removeErrorListeners();
-			el = new simpleErrorListener(parser);
-			parser.addErrorListener(el);
+			parser.addErrorListener(new simpleErrorListener(parser));
 			simpleErrorStrategy handler = new simpleErrorStrategy();
 			parser.setErrorHandler(handler);
 		}
 
 		simpleParser.FileContext fileTree = parser.file();
+		if (parser.getNumberOfSyntaxErrors() > 0) System.exit(exitCodes.FAILED_PROGRAM_PARSE);
 
-		if (parser.getNumberOfSyntaxErrors() < 1){
+		validateListener validator;
+		if(!argsIn.minimalOpt){
+			nodeCounter nC = new nodeCounter();
+			walker.walk(nC, fileTree);
+			validator = new validateListenerWithBar(parser, nC.getCount());
+		}else{
+			validator = new validateListener(parser);
+		}
+		walker.walk(validator, fileTree);
+		if (!validator.isValidationOk()) System.exit(exitCodes.FAILED_PROGRAM_VALIDATION);
 
-			ParseTreeWalker walker = new ParseTreeWalker();
+		if(!(argsIn.minimalOpt && argsIn.execOpt)) System.out.println("Validation successful");
 
-			validateListener validator;
+		if (argsIn.execOpt) {
 
-			if(!argsIn.minimalOpt){
-				nodeCounter nC = new nodeCounter();
-				walker.walk(nC, fileTree);
-				validator = new validateListenerWithBar(parser, nC.getCount());
-			}else{
-				validator = new validateListener(parser);
+			List<typeVisitor.dataType> pArgs = argsIn.programArgs.stream().map(inputHandler::typeOfLiteral).toList();
+			if (!validator.validateProgramArgs(pArgs)){
+				System.out.println("Invalid program arguments");
+				System.exit(exitCodes.INVALID_PROGRAM_ARGS);
 			}
 
-			walker.walk(validator, fileTree);
-
-			if (validator.isValidationOk()){
-				if(!(argsIn.minimalOpt && argsIn.execOpt)) System.out.println("Validation successful");
-				if(!argsIn.validOpts){
-					System.out.println("Invalid CL call");
-				} else if (argsIn.execOpt) {
-					if (validator.validateProgramArgs(argsIn.programArgs.stream().map(inputHandler::typeOfLiteral).collect(Collectors.toList()))) {
-						if(el != null){
-							el.showCounter(false);
-						}
-						executeVisitor.Builder execB = new executeVisitor.Builder(parser);
-						execB.setExpectedInputs(validator.getRuntimeInputs());
-						execB.setProgramArgs(argsIn.programArgs.stream().map(inputHandler::valOfLiteral).collect(Collectors.toList()));
-						if(argsIn.loopLimit > 0){
-							execB.setMaxLoop(argsIn.loopLimit);
-						}
-						if (argsIn.recLimit > 0){
-							execB.setMaxRecursion(argsIn.recLimit);
-						}
-						executeVisitor executor = execB.build();
-						executor.visitFile(fileTree);
-					} else {
-						System.out.println("Invalid program arguments");
-					}
-				}
-			} else {
-				System.out.println("Validation failed");
+			if(!argsIn.minimalOpt) {
+				simpleErrorListener el = (simpleErrorListener) parser.getErrorListeners().get(0);
+				el.showCounter(false);
 			}
+
+			executeVisitor.Builder execB = new executeVisitor.Builder(parser);
+			execB.setExpectedInputs(validator.getRuntimeInputs());
+			execB.setProgramArgs(argsIn.programArgs.stream().map(inputHandler::valOfLiteral).toList());
+			if(argsIn.loopLimit > 0) execB.setMaxLoop(argsIn.loopLimit);
+			if (argsIn.recLimit > 0) execB.setMaxRecursion(argsIn.recLimit);
+			executeVisitor executor = execB.build();
+
+			executor.visitFile(fileTree);
 		}
 	}
 
@@ -187,7 +200,7 @@ public class simpleInterpreter {
 						break;
 					default:
 						System.out.println("Unknown option " + arg + ". Use --help to view all options.");
-						System.exit(1);
+						System.exit(exitCodes.INVALID_COMMAND_ARGS);
 				}
 				if (ignoreRest) break;
 			}
@@ -217,13 +230,13 @@ public class simpleInterpreter {
 					+-------------------------------------------------+
 					""";
 			System.out.println(logo);
-			System.exit(0);
+			System.exit(exitCodes.TERMINATION);
 		}
 
 		private static void printHelp(){
 			String helpMsg =
 					"""
-					SIMPLE v1.4.1 Copyright (C) 2025 PCazzaniga (github.com)
+					SIMPLE v1.5.0 Copyright (C) 2025 - 2026 PCazzaniga (github.com)
 					This program is distributed under the GNU General Public License Version 3
 					
 					Interpreter for the S.I.M.P.L.E. programming language, validates and optionally executes a .simple file.
@@ -244,7 +257,7 @@ public class simpleInterpreter {
 					Options with * can be used without a filename.
 					""";
 			System.out.println(helpMsg);
-			System.exit(0);
+			System.exit(exitCodes.TERMINATION);
 		}
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 PCazzaniga (github.com)
+ * Copyright (c) 2025 - 2026 PCazzaniga (github.com)
  *
  *     errorMsg.java is part of SIMPLE.
  *
@@ -21,16 +21,8 @@ import java.util.List;
 
 class errorMsg {
 
-	public static String accKitNoField(String fieldName, String kitName, List<String> suggestions){
-		StringBuilder msg = new StringBuilder("Attempting to access non-existent field '" + fieldName + "' in Kit " + kitName + ".");
-		if (!suggestions.isEmpty()) {
-			msg.append(" Did you mean");
-			for (String s : suggestions) {
-				msg.append(" '").append(s).append("',");
-			}
-			msg.replace(msg.length() - 1, msg.length(), " ?");
-		}
-		return msg.toString();
+	public static String accKitNoField(String fieldName, String kitName, List<String> suggestions) {
+		return "Attempting to access non-existent field '" + fieldName + "' in Kit " + kitName + "." + didYouMean(suggestions);
 	}
 
 	public static String accKitDynamic() {
@@ -136,16 +128,8 @@ class errorMsg {
 		return "Unable to recognize result type " + resType + " of procedure " + funName + ".";
 	}
 
-	public static String funUndefined(String funName, List<String> suggestions){
-		StringBuilder msg = new StringBuilder("Procedure '" + funName + "' is undefined.");
-		if (!suggestions.isEmpty()) {
-			msg.append(" Did you mean");
-			for (String s : suggestions) {
-				msg.append(" '").append(s).append("',");
-			}
-			msg.replace(msg.length() - 1, msg.length(), " ?");
-		}
-		return msg.toString();
+	public static String funUndefined(String funName, List<String> suggestions) {
+		return "Procedure '" + funName + "' is undefined." + didYouMean(suggestions);
 	}
 
 	public static String funUnused(String funName, int definedLine){
@@ -245,16 +229,8 @@ class errorMsg {
 		return "Unable to recognize aliased type " + typeString + ".";
 	}
 
-	public static String typeUndefined(String typeName, List<String> suggestions){
-		StringBuilder msg = new StringBuilder("Type '" + typeName + "' is undefined.");
-		if (!suggestions.isEmpty()) {
-			msg.append(" Did you mean");
-			for (String s : suggestions) {
-				msg.append(" '").append(s).append("',");
-			}
-			msg.replace(msg.length() - 1, msg.length(), " ?");
-		}
-		return msg.toString();
+	public static String typeUndefined(String typeName, List<String> suggestions) {
+		return "Type '" + typeName + "' is undefined." + didYouMean(suggestions);
 	}
 
 	public static String typeUnused(String typeName, int declaredLine){
@@ -281,20 +257,28 @@ class errorMsg {
 		return "Unable to recognize type " + typeString + " of variable " + varName +".";
 	}
 
-	public static String varUndefined(String varName, List<String> suggestions){
-		StringBuilder msg = new StringBuilder("Variable '" + varName + "' is undefined.");
-		if (!suggestions.isEmpty()) {
-			msg.append(" Did you mean");
-			for (String s : suggestions) {
-				msg.append(" '").append(s).append("',");
-			}
-			msg.replace(msg.length() - 1, msg.length(), " ?");
-		}
-		return msg.toString();
+	public static String varUndefined(String varName, List<String> suggestions) {
+		return "Variable '" + varName + "' is undefined." + didYouMean(suggestions);
 	}
 
 	public static String varUnused(String varName){
 		return "Variable " + varName + " declared but never used.";
+	}
+
+	private static String didYouMean(List<String> suggestions){
+		if(!suggestions.isEmpty()){
+			StringBuilder sb = new StringBuilder(" Did you mean ");
+			sb.append(suggestions.get(0));
+			if(suggestions.size() > 1){
+				for(String s : suggestions.subList(1, suggestions.size() - 1)){
+					sb.append(", ").append(s);
+				}
+				sb.append(" or ").append(suggestions.get(suggestions.size() - 1));
+			}
+			sb.append(" ?");
+			return sb.toString();
+		}
+		return null;
 	}
 
 }

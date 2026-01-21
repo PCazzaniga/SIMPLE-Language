@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 PCazzaniga (github.com)
+ * Copyright (c) 2025 - 2026 PCazzaniga (github.com)
  *
  *     valueVisitor.java is part of SIMPLE.
  *
@@ -281,14 +281,14 @@ class valueVisitor extends simpleBaseVisitor<valueVisitor.Val> {
 			case simpleParser.DIV -> {
 				if (second.equals(new numberVal(0))) {
 					signalError(ctx.ar_oprnd(1), errorRuntimeMsg.divisionByZero());
-					System.exit(1);
+					System.exit(exitCodes.ILLEGAL_OPERATION);
 				}
 				yield new numberVal(first.val() / second.val());
 			}
 			default -> {
 				if (second.equals(new numberVal(0))) {
 					signalError(ctx.ar_oprnd(1), errorRuntimeMsg.modulusByZero());
-					System.exit(1);
+					System.exit(exitCodes.ILLEGAL_OPERATION);
 				}
 				yield new numberVal(first.val() % second.val());
 			}
@@ -373,11 +373,11 @@ class valueVisitor extends simpleBaseVisitor<valueVisitor.Val> {
 		else position = (int) ((numberVal) visitReserved(acc.reserved())).val();
 		if (position < 1) {
 			signalError(acc, errorRuntimeMsg.accessUnderSize(position));
-			System.exit(1);
+			System.exit(exitCodes.ILLEGAL_ACCESS);
 		}
 		if (position > st.size()) {
 			signalError(acc, errorRuntimeMsg.accessOverSize(position, st.size()));
-			System.exit(1);
+			System.exit(exitCodes.ILLEGAL_ACCESS);
 		}
 		return st.getAt(position - 1);
 	}

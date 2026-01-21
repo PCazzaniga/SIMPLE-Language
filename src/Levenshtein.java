@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 PCazzaniga (github.com)
+ * Copyright (c) 2025 - 2026 PCazzaniga (github.com)
  *
  *     Levenshtein.java is part of SIMPLE.
  *
@@ -19,8 +19,8 @@
 
 import static java.lang.Math.abs;
 
-//import java.util.ArrayList;
-//import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 class Levenshtein {
@@ -59,36 +59,36 @@ class Levenshtein {
 		return cost[lenS] <= max;
 	}
 
-    /*public static int distance(String first, String second) {
-        if (first.equals(second)) return 0;
-        int lenF = first.length();
-        int lenS = second.length();
-        if (lenF == 0) return lenS;
-        if (lenS == 0) return lenF;
-        if (lenF < lenS) {
-            int tempL = lenF;
-            lenF = lenS;
-            lenS = tempL;
-            String tempS = first;
-            first = second;
-            second = tempS;
-        }
-        int[] cost = new int[lenS+1];
-        for (int i=0; i<=lenS; i+=1) cost[i] = i;
-        for (int i=1; i<=lenF; i+=1) {
-            cost[0] = i;
-            int prev = i-1;
-            int min = prev;
-            for (int j=1; j<=lenS; j+=1) {
-                int act = prev;
-                if (first.charAt(i-1) != second.charAt(j-1)) act++;
-                prev = cost[j];
-                cost[j] = min(cost[j] + 1, cost[j-1] + 1, act);
-                if (prev < min) min = prev;
-            }
-        }
-        return cost[lenS];
-    }*/
+	public static int distance(String first, String second) {
+		if (first.equals(second)) return 0;
+		int lenF = first.length();
+		int lenS = second.length();
+		if (lenF == 0) return lenS;
+		if (lenS == 0) return lenF;
+		if (lenF < lenS) {
+			int tempL = lenF;
+			lenF = lenS;
+			lenS = tempL;
+			String tempS = first;
+			first = second;
+			second = tempS;
+		}
+		int[] cost = new int[lenS+1];
+		for (int i=0; i<=lenS; i+=1) cost[i] = i;
+		for (int i=1; i<=lenF; i+=1) {
+			cost[0] = i;
+			int prev = i-1;
+			int min = prev;
+			for (int j=1; j<=lenS; j+=1) {
+				int act = prev;
+				if (first.charAt(i-1) != second.charAt(j-1)) act++;
+				prev = cost[j];
+				cost[j] = min(cost[j] + 1, cost[j-1] + 1, act);
+				if (prev < min) min = prev;
+			}
+		}
+		return cost[lenS];
+	}
 
 	private static int min(int a, int b, int c) {
 		int min = a;
@@ -101,9 +101,9 @@ class Levenshtein {
 		return targets.stream().filter(str -> distanceLoE(matcher, str, max)).toList();
 	}
 
-	/*public static List<String> sortByDistance(String matcher, List<String> targets){
+	public static List<String> sortByDistance(String matcher, List<String> targets){
 		List<String> copy = new ArrayList<>(targets);
 		copy.sort(Comparator.comparingInt(str -> distance(matcher, str)));
 		return copy;
-	}*/
+	}
 }

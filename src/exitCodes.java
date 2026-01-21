@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2025 - 2026 PCazzaniga (github.com)
  *
- *     nodeCounter.java is part of SIMPLE.
+ *     exitCodes.java is part of SIMPLE.
  *
  *     SIMPLE is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -17,30 +17,20 @@
  *     along with SIMPLE.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.tree.ErrorNode;
-import org.antlr.v4.runtime.tree.ParseTreeListener;
-import org.antlr.v4.runtime.tree.TerminalNode;
-
-public class nodeCounter implements ParseTreeListener {
-
-    private int count = 0;
-
-    @Override
-    public void visitTerminal(TerminalNode terminalNode) {}
-
-    @Override
-    public void visitErrorNode(ErrorNode errorNode) {}
-
-    @Override
-    public void enterEveryRule(ParserRuleContext parserRuleContext) {
-        count++;
-    }
-
-    @Override
-    public void exitEveryRule(ParserRuleContext parserRuleContext) {}
-
-    public int getCount() {
-        return count;
-    }
+public final class exitCodes {
+	public static final int
+			TERMINATION = 0,
+			WRONG_FILE_TYPE = 1,
+			CANNOT_READ_FILE = 2,
+			INVALID_COMMAND_ARGS = 3,
+			FAILED_SPELLING_PARSE = 4,
+			FAILED_SPELLING_CHECK = 5,
+			FAILED_PROGRAM_PARSE = 6,
+			FAILED_PROGRAM_VALIDATION = 7,
+			INVALID_PROGRAM_ARGS = 8,
+			ILLEGAL_OPERATION = 9,
+			ILLEGAL_ACCESS = 10,
+			ILLEGAL_EXECUTION_STATE = 11,
+			ILLEGAL_INSTRUCTION = 12,
+			FAILED_INPUT = 13;
 }

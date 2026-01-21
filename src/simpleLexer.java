@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 PCazzaniga (github.com)
+ * Copyright (c) 2025 - 2026 PCazzaniga (github.com)
  *
  *     simpleLexer.java is part of SIMPLE.
  *
@@ -146,8 +146,6 @@ public class simpleLexer extends Lexer {
 
 	private java.util.LinkedList<Token> pendingTokens = new java.util.LinkedList<>();
 
-	private boolean collectionMode = false;
-
 	private Token makeToken (int type, String text, Token adj) {
 		CommonToken token = new CommonToken(adj);
 		token.setType(type);
@@ -161,15 +159,14 @@ public class simpleLexer extends Lexer {
 		if (!pendingTokens.isEmpty()) return pendingTokens.poll();
 		Token next = super.nextToken();
 
-		if(next.getType() == NEWLINE) {
+		if(next.getType() == NEWLINE){
 			Token nexter = super.nextToken();
-			if (nexter.getType() != TAB) {
-				while (currentIndentation > 0) {
+			if (nexter.getType() != TAB){
+				while(currentIndentation > 0){
 					pendingTokens.offer(makeToken(DEDENT, "Dedent#" + currentIndentation, nexter));
 					currentIndentation--;
 				}
 				if (nexter.getType() == EOF) pendingTokens.offer(makeToken(NEWLINE, "NL", next));
-				else if (nexter.getType() == EXTRANEOUS_INPUT) nexter = groupExIn(nexter, true);
 				pendingTokens.offer(nexter);
 			} else {
 				int indentCount = nexter.getText().length();
@@ -185,8 +182,7 @@ public class simpleLexer extends Lexer {
 					currentIndentation--;
 				}
 			}
-		}
-		else if (next.getType() == EOF){
+		} else if (next.getType() == EOF){
 			pendingTokens.offer(makeToken(NEWLINE, "NL", next));
 			while(currentIndentation > 0){
 				pendingTokens.offer(makeToken(DEDENT, "Dedent#" + currentIndentation, next));
@@ -196,39 +192,9 @@ public class simpleLexer extends Lexer {
 			pendingTokens.offer(next);
 			return pendingTokens.poll();
 		}
-		else if (next.getType() == EXTRANEOUS_INPUT && !collectionMode) next = groupExIn(next, false);
 		return next;
 	}
 
-	private Token groupExIn(Token next, boolean lookingAhead) {
-		collectionMode = true;
-		StringBuilder collector = new StringBuilder(next.getText());
-		Token nexter = nextToken();
-		Token lastNext = next;
-		while(nexter.getType() == EXTRANEOUS_INPUT || nexter.getType() == S){
-			collector.append(nexter.getText());
-			lastNext = nexter;
-			nexter = nextToken();
-		}
-		collectionMode = false;
-		pendingTokens.push(nexter);
-		CommonToken newT = new CommonToken(next);
-		if (lastNext.getType() == S){
-			collector.setLength(collector.length() - 1);
-			newT.setStopIndex(lastNext.getStopIndex() - 1);
-			if(lookingAhead){
-				newT.setText(collector.toString());
-				pendingTokens.offer(newT);
-				return lastNext;
-			} else {
-				pendingTokens.push(lastNext);
-			}
-		} else {
-			newT.setStopIndex(lastNext.getStopIndex());
-		}
-		newT.setText(collector.toString());
-		return newT;
-	}
 	/*******************************************************************************/
 
 
