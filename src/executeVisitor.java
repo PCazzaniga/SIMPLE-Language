@@ -197,7 +197,7 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 			}
 		} else {
 			recognizer.notifyErrorListeners(dummy, errorRuntimeMsg.noMain(), null);
-			System.exit(1);
+			System.exit(exitCodes.ILLEGAL_EXECUTION_STATE);
 		}
 		return null;
 	}
@@ -225,7 +225,7 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 			int current_call = callTracker.get(fun_name) + 1;
 			if (current_call > MAX_RECURSION){
 				signalLongError(ctx, errorRuntimeMsg.recursionOverLimit(fun_name, MAX_RECURSION));
-				System.exit(1);
+				System.exit(exitCodes.ILLEGAL_EXECUTION_STATE);
 			} else callTracker.replace(fun_name, current_call);
 		} else callTracker.put(fun_name, 1);
 		List<valueVisitor.Val> args = new ArrayList<>(ctx.direct_value().size());
@@ -400,7 +400,7 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 	private valueVisitor.Val getInput(int line) {
 		if(!runtimeInputs.containsKey(line)){
 			recognizer.notifyErrorListeners(dummy, errorRuntimeMsg.unexpectedInputRequest(line), null);
-			System.exit(1);
+			System.exit(exitCodes.ILLEGAL_EXECUTION_STATE);
 		}
 		Thread inputInterruptedShutdown = new Thread(() ->
 				recognizer.notifyErrorListeners(dummy, errorRuntimeMsg.inputInterrupted(), null));
@@ -421,13 +421,13 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 				}
 				if (i < MAX_LOOP - 1) recognizer.notifyErrorListeners(dummy, errorRuntimeMsg.inputAgain(), null);
 			} else {
-				System.exit(1);
+				System.exit(exitCodes.FAILED_INPUT);
 			}
 		}
 		Runtime.getRuntime().removeShutdownHook(inputInterruptedShutdown);
 		recognizer.notifyErrorListeners(dummy, errorRuntimeMsg.inputTooManyAttempts(MAX_LOOP), null);
-		System.exit(1);
-		return new valueVisitor.nothingVal();	
+		System.exit(exitCodes.FAILED_INPUT);
+		return new valueVisitor.nothingVal();
 	}
 	
 	private int getPosition(simpleParser.Struct_accessContext strAcc, int maxPos){
@@ -442,12 +442,12 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 			}
 			if (result < 1) {
 				signalLongError(acc, errorRuntimeMsg.accessUnderSize(result));
-				System.exit(1);
+				System.exit(exitCodes.ILLEGAL_ACCESS);
 			}
 		}
 		if (result > maxPos) {
 			signalLongError(acc, errorRuntimeMsg.accessOverSize(result, maxPos));
-			System.exit(1);
+			System.exit(exitCodes.ILLEGAL_ACCESS);
 		}
 		return result;
 	}
@@ -463,7 +463,7 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 		}
 		if (loopCounter > MAX_LOOP){
 			signalLongError(cond, errorRuntimeMsg.loopOverLimit(MAX_LOOP));
-			System.exit(1);
+			System.exit(exitCodes.ILLEGAL_EXECUTION_STATE);
 		}
 	}
 	
@@ -471,7 +471,7 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 		int limit = (int) ((valueVisitor.numberVal) eval.visitDirect_value(dv)).val();
 		if (limit < 0){
 			signalLongError(dv, errorRuntimeMsg.loopNegative(limit));
-			System.exit(1);
+			System.exit(exitCodes.ILLEGAL_INSTRUCTION);
 		}
 		String counter = simpleLexer.VOCABULARY.getLiteralName(simpleParser.COUNTER).replace("'", "");
 		int loopCounter = (int) ((valueVisitor.numberVal) localVars.get(counter)).val();

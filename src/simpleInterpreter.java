@@ -33,12 +33,11 @@ public class simpleInterpreter {
 		List<String> argsList = new ArrayList<>(List.of(args));
 
 		String firstArg = argsList.get(0);
-
 		if(firstArg.equals("-h") || firstArg.equals("--help")) argsInterpreter.printHelp();
 		if(firstArg.equals("-s") || firstArg.equals("--simple")) argsInterpreter.printLogo();
 		if(!firstArg.endsWith(".simple")) {
 			System.out.println(firstArg + " is not a valid .simple file.");
-			System.exit(1);
+			System.exit(exitCodes.WRONG_FILE_TYPE);
 		}
 
 		CharStream input = null;
@@ -46,7 +45,7 @@ public class simpleInterpreter {
 			input = CharStreams.fromFileName(firstArg);
 		} catch (IOException e) {
 			System.out.println("Failed to read input file.");
-			System.exit(1);
+			System.exit(exitCodes.CANNOT_READ_FILE);
 		}
 
 		argsList.remove(0);
@@ -74,7 +73,7 @@ public class simpleInterpreter {
 			validator = new validateListener(parser);
 		}
 		walker.walk(validator, fileTree);
-		if (!validator.isValidationOk()) System.exit(1);
+		if (!validator.isValidationOk()) System.exit(exitCodes.FAILED_PROGRAM_VALIDATION);
 
 		if(!(argsIn.minimalOpt && argsIn.execOpt)) System.out.println("Validation successful");
 
@@ -83,7 +82,7 @@ public class simpleInterpreter {
 			List<typeVisitor.dataType> pArgs = argsIn.programArgs.stream().map(inputHandler::typeOfLiteral).toList();
 			if (!validator.validateProgramArgs(pArgs)){
 				System.out.println("Invalid program arguments");
-				System.exit(1);
+				System.exit(exitCodes.INVALID_PROGRAM_ARGS);
 			}
 
 			if(!argsIn.minimalOpt) {
@@ -174,7 +173,7 @@ public class simpleInterpreter {
 						break;
 					default:
 						System.out.println("Unknown option " + arg + ". Use --help to view all options.");
-						System.exit(1);
+						System.exit(exitCodes.INVALID_COMMAND_ARGS);
 				}
 				if (ignoreRest) break;
 			}
@@ -204,7 +203,7 @@ public class simpleInterpreter {
 					+-------------------------------------------------+
 					""";
 			System.out.println(logo);
-			System.exit(0);
+			System.exit(exitCodes.TERMINATION);
 		}
 
 		private static void printHelp(){
@@ -231,7 +230,7 @@ public class simpleInterpreter {
 					Options with * can be used without a filename.
 					""";
 			System.out.println(helpMsg);
-			System.exit(0);
+			System.exit(exitCodes.TERMINATION);
 		}
 	}
 }
