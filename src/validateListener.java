@@ -21,8 +21,6 @@ import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.TokenSource;
-import org.antlr.v4.runtime.misc.Pair;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -566,7 +564,7 @@ class validateListener extends simpleBaseListener{
 		types.forEach((name, info)-> {
 			if(info.isNotUsed()) errors.add(new Error(info.reference, errorMsg.typeUnused(name, info.getLine())));
 		});
-		String mainFunc = simpleLexer.VOCABULARY.getLiteralName(simpleParser.MAIN).replace("'", "");
+		String mainFunc = recognizer.getVocabulary().getLiteralName(simpleParser.MAIN).replace("'", "");
 		functions.forEach((name, info) -> {
 			if(info.getUnused() && !name.equals(mainFunc)) {
 				errors.add(new Error(info.reference, errorMsg.funUnused(name, info.getLine())));
@@ -647,7 +645,7 @@ class validateListener extends simpleBaseListener{
 			} else {
 				boolean allOk = true;
 				List<typeVisitor.dataType> params = new ArrayList<>();
-				String mainFunc = simpleLexer.VOCABULARY.getLiteralName(simpleParser.MAIN).replace("'", "");
+				String mainFunc = recognizer.getVocabulary().getLiteralName(simpleParser.MAIN).replace("'", "");
 				for (simpleParser.ParamContext p : fd.fun_def().param()) {
 					typeVisitor.dataType pType = typeChecker.visitType(p.type());
 					if (pType.isUnknown()){
@@ -797,7 +795,7 @@ class validateListener extends simpleBaseListener{
 	}
 
 	public boolean validateProgramArgs(List<typeVisitor.dataType> args){
-		String mainFunc = simpleLexer.VOCABULARY.getLiteralName(simpleParser.MAIN).replace("'", "");
+		String mainFunc = recognizer.getVocabulary().getLiteralName(simpleParser.MAIN).replace("'", "");
 		if(!functions.containsKey(mainFunc)) return args.isEmpty();
 		List<typeVisitor.dataType> mainPTypes = functions.get(mainFunc).getParamTypes();
 		if (args.size() != mainPTypes.size()) return false;

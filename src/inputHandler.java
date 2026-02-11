@@ -24,7 +24,7 @@ final class inputHandler{
 	public static valueVisitor.Val valOfLiteral(simpleRTLitParser.LiteralContext ctx) {
 		if (ctx.Number() != null) return new valueVisitor.numberVal(Double.parseDouble(ctx.Number().getText()));
 		if (ctx.Boolean() != null) {
-			String tr = simpleLexer.VOCABULARY.getLiteralName(simpleParser.TRUE).replace("'", "");
+			String tr = simpleRTLitLexer.VOCABULARY.getLiteralName(simpleParser.TRUE).replace("'", "");
 			return new valueVisitor.booleanVal(ctx.Boolean().getText().equals(tr));
 		}
 		return new valueVisitor.textVal(ctx.Text().getText());

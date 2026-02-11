@@ -99,8 +99,7 @@ class valueVisitor extends simpleBaseVisitor<valueVisitor.Val> {
 
 		@Override
 		public String toString() {
-			if (val) return simpleLexer.VOCABULARY.getLiteralName(simpleParser.TRUE).replace("'", "");
-			return simpleLexer.VOCABULARY.getLiteralName(simpleParser.FALSE).replace("'", "");
+			return val ? "True" : "False";
 		}
 	}
 	
@@ -327,7 +326,7 @@ class valueVisitor extends simpleBaseVisitor<valueVisitor.Val> {
 		if (ctx.Text() != null) return new textVal(cleanUpTextLit(ctx.Text().getText()));
 		if (ctx.number() != null) return new numberVal(Double.parseDouble(ctx.number().getText()));
 		if (ctx.Boolean() != null) {
-			String tr = simpleLexer.VOCABULARY.getLiteralName(simpleParser.TRUE).replace("'", "");
+			String tr = recognizer.getVocabulary().getLiteralName(simpleParser.TRUE).replace("'", "");
 			return new booleanVal(ctx.Boolean().getText().equals(tr));
 		}
 		if (ctx.NULL() != null) return new nothingVal();
@@ -337,7 +336,7 @@ class valueVisitor extends simpleBaseVisitor<valueVisitor.Val> {
 	@Override
 	public Val visitLog_oprnd(simpleParser.Log_oprndContext ctx) {
 		if (ctx.Boolean() != null) {
-			String tr = simpleLexer.VOCABULARY.getLiteralName(simpleParser.TRUE).replace("'", "");
+			String tr = recognizer.getVocabulary().getLiteralName(simpleParser.TRUE).replace("'", "");
 			return new booleanVal(ctx.Boolean().getText().equals(tr));
 		}
 		if (ctx.variable() != null) return visitVariable(ctx.variable());
@@ -356,7 +355,7 @@ class valueVisitor extends simpleBaseVisitor<valueVisitor.Val> {
 	@Override
 	public Val visitReserved(simpleParser.ReservedContext ctx) {
 		if (ctx.COUNTER() != null) {
-			return fetchValue(simpleLexer.VOCABULARY.getLiteralName(simpleParser.COUNTER).replace("'", ""));
+			return fetchValue(recognizer.getVocabulary().getLiteralName(simpleParser.COUNTER).replace("'", ""));
 		}
 		if (ctx.SIZEOF() != null) return new numberVal(((structVal) visitVar_name(ctx.var_name())).size());
 		return new numberVal((float) rng.nextInt(0, 100));

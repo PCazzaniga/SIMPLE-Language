@@ -86,25 +86,25 @@ class typeVisitor extends simpleBaseVisitor<typeVisitor.dataType>{
 	
 	public static class nothingType extends  dataType{
 		public nothingType(){
-			this.typeString = simpleLexer.VOCABULARY.getLiteralName(simpleParser.NULL).replace("'", "");
+			this.typeString = "Nothing";
 		}
 	}
 	
 	public static class numberType extends dataType{
 		public numberType() {
-			this.typeString = simpleLexer.VOCABULARY.getLiteralName(simpleParser.NUMBER).replace("'", "");
+			this.typeString = "Number";
 		}
 	}
 	
 	public static class textType extends dataType{
 		public textType() {
-			this.typeString = simpleLexer.VOCABULARY.getLiteralName(simpleParser.STRING).replace("'", "");
+			this.typeString = "Text";
 		}
 	}
 	
 	public static class booleanType extends  dataType{
 		public booleanType() {
-			this.typeString = simpleLexer.VOCABULARY.getLiteralName(simpleParser.BOOL).replace("'", "");
+			this.typeString = "Boolean";
 		}
 	}
 
@@ -255,7 +255,7 @@ class typeVisitor extends simpleBaseVisitor<typeVisitor.dataType>{
 		private final String size;
 
 		public seqType(String size, dataType dt){
-			this.typeString = simpleLexer.VOCABULARY.getLiteralName(simpleParser.SEQUENCE).replace("'", "");
+			this.typeString = "Sequence of ";
 			this.size = size;
 			innerType = dt;
 		}
@@ -294,7 +294,7 @@ class typeVisitor extends simpleBaseVisitor<typeVisitor.dataType>{
 		private dataType innerType;
 
 		public listType(dataType dt){
-			this.typeString = simpleLexer.VOCABULARY.getLiteralName(simpleParser.LIST).replace("'", "");
+			this.typeString = "List of ";
 			innerType = dt;
 		}
 
@@ -334,7 +334,7 @@ class typeVisitor extends simpleBaseVisitor<typeVisitor.dataType>{
 		}
 
 		public kitType(List<dataType> fieldTypes, List<String> fieldNames){
-			typeString = simpleLexer.VOCABULARY.getLiteralName(simpleParser.KIT).replace("'", "");
+			typeString = "Kit of ";
 			this.fieldTypes = fieldTypes;
 			this.fieldNames = fieldNames;
 			prepareString(fieldTypes, fieldNames);
