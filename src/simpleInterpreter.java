@@ -55,9 +55,9 @@ public class simpleInterpreter {
 			System.exit(exitCodes.INVALID_COMMAND_ARGS);
 		}
 
-		simpleSpellCheckLexer spellLexer = new simpleSpellCheckLexer(input);
+		simpleSpellCheckLexer spellLexer = new simpleSpellCheckLexer(input, argsIn.dialect);
 		CommonTokenStream spellTokens = new CommonTokenStream(spellLexer);
-		simpleSpellCheckParser spellParser = new simpleSpellCheckParser(spellTokens);
+		simpleSpellCheckParser spellParser = new simpleSpellCheckParser(spellTokens, argsIn.dialect);
 		if(!argsIn.minimalOpt){
 			spellParser.removeErrorListeners();
 			spellParser.addErrorListener(new simpleErrorListener(spellParser));
@@ -78,9 +78,9 @@ public class simpleInterpreter {
 			System.exit(exitCodes.CANNOT_READ_FILE);
 		}
 
-		simpleLexer lexer = new simpleLexer(input);
+		simpleLexer lexer = new simpleLexer(input, argsIn.dialect);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
-		simpleParser parser = new simpleParser(tokens);
+		simpleParser parser = new simpleParser(tokens, argsIn.dialect);
 		if(!argsIn.minimalOpt){
 			parser.removeErrorListeners();
 			parser.addErrorListener(new simpleErrorListener(parser));
@@ -134,6 +134,7 @@ public class simpleInterpreter {
 		boolean minimalOpt = false;
 		int loopLimit = 0;
 		int recLimit = 0;
+		simpleLanguages.Lang dialect = simpleLanguages.Lang.ENG;
 		final List<simpleRTLitParser.LiteralContext> programArgs = new ArrayList<>();
 
 		public argsInterpreter(List<String> args) {
@@ -145,6 +146,22 @@ public class simpleInterpreter {
 					case "-a": case "--args":
 						itr.remove();
 						ignoreRest = true;
+						break;
+					case "-d": case "--dialect":
+						//Set the grammar dialect to expect
+						itr.remove();
+						if (itr.hasNext()) {
+							try{
+								dialect = simpleLanguages.Lang.valueOf(itr.next());
+							} catch (IllegalArgumentException e) {
+								validOpts = false;
+								ignoreRest = true;
+							}
+							itr.remove();
+						} else {
+							validOpts = false;
+							ignoreRest = true;
+						}
 						break;
 					case "-e": case "--execute":
 						itr.remove();
@@ -248,6 +265,7 @@ public class simpleInterpreter {
 					Options:
 					\t-h, --help\t\tPrint this help message instead of running the interpreter\t*
 					\t-a, --args\t\tUse anything after this as program arguments
+					\t-d, --dialect\t\tSpecify the code dialect as ENG (default), ESP, FRA, ITA or ALT
 					\t-e, --execute\t\tExecute file after (successful) validation
 					\t-l, --loop\t\tSet custom iteration limit for conditional loops during execution
 					\t-m, --minimal\t\tReduce interpreter output during parsing and validation
