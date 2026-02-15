@@ -253,7 +253,7 @@ public class simpleInterpreter {
 		private static void printHelp(){
 			String helpMsg =
 					"""
-					SIMPLE v1.5.0 Copyright (C) 2025 - 2026 PCazzaniga (github.com)
+					SIMPLE v1.6.0 Copyright (C) 2025 - 2026 PCazzaniga (github.com)
 					This program is distributed under the GNU General Public License Version 3
 					
 					Interpreter for the S.I.M.P.L.E. programming language, validates and optionally executes a .simple file.
