@@ -182,7 +182,7 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 				}
 			}
 		}
-		String mainFunc = simpleLexer.VOCABULARY.getLiteralName(simpleParser.MAIN).replace("'", "");
+		String mainFunc = recognizer.getVocabulary().getLiteralName(simpleParser.MAIN).replace("'", "");
 		if(functions.containsKey(mainFunc)){
 			for (simpleParser.InformationContext i : ctx.information()){
 				if (i.var_decl() != null) createVar(i.var_decl());
@@ -304,7 +304,7 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 	@Override
 	public Void visitLoop(simpleParser.LoopContext ctx) {
 		enteringScopeUpdate();
-		String counter = simpleLexer.VOCABULARY.getLiteralName(simpleParser.COUNTER).replace("'", "");
+		String counter = recognizer.getVocabulary().getLiteralName(simpleParser.COUNTER).replace("'", "");
 		localVars.put(counter, new valueVisitor.numberVal(1));
 		simpleParser.Loop_defContext ld = ctx.loop_def();
 		if (ld instanceof simpleParser.CondLoopContext){
@@ -453,7 +453,7 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 	}
 	
 	private void runCondLoop(simpleParser.ConditionContext cond, simpleParser.Scope_blockContext block) {
-		String counter = simpleLexer.VOCABULARY.getLiteralName(simpleParser.COUNTER).replace("'", "");
+		String counter = recognizer.getVocabulary().getLiteralName(simpleParser.COUNTER).replace("'", "");
 		int loopCounter = (int) ((valueVisitor.numberVal) localVars.get(counter)).val();
 		while(loopCounter <= MAX_LOOP && ((valueVisitor.booleanVal) eval.visitCondition(cond)).val()){
 			visitScope_block(block);
@@ -473,7 +473,7 @@ class executeVisitor extends simpleBaseVisitor<Void>{
 			signalLongError(dv, errorRuntimeMsg.loopNegative(limit));
 			System.exit(exitCodes.ILLEGAL_INSTRUCTION);
 		}
-		String counter = simpleLexer.VOCABULARY.getLiteralName(simpleParser.COUNTER).replace("'", "");
+		String counter = recognizer.getVocabulary().getLiteralName(simpleParser.COUNTER).replace("'", "");
 		int loopCounter = (int) ((valueVisitor.numberVal) localVars.get(counter)).val();
 		while(loopCounter <= limit){
 			visitScope_block(block);

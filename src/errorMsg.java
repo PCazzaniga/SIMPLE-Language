@@ -57,11 +57,11 @@ class errorMsg {
 		return "Attempting to assign from input to variable of non-basic type " + typeString + ".";
 	}
 
-	public static String assignTypeWrong(String varType, String valType){
+	public static String assignTypeWrong(String varType, String valType) {
 		return "Attempting to assign to variable of type " + varType + " value of mismatched type " + valType + ".";
 	}
 
-	public static String assignTypeUnk(String valueString){
+	public static String assignTypeUnk(String valueString) {
 		return "Unable to recognize type of assigned value " + valueString + ".";
 	}
 
@@ -77,54 +77,53 @@ class errorMsg {
 		return "Attempting to compare value of type " + firstType + " with value of mismatched type " + secondType + ".";
 	}
 
-	public static String funAlreadyExist(String funName, int definedLine){
+	public static String funAlreadyExist(String funName, int definedLine) {
 		return "Procedure '" + funName + "' is already defined at line " + definedLine + ".";
 	}
 
-	public static String funArgTypeUnk(String argType, String argString){
+	public static String funArgTypeUnk(String argType, String argString) {
 		return "Unable to recognize type " + argType + " of argument " + argString + ".";
 	}
 
-	public static String funArgsNumWrong(String funName, int gotN, int wantN){
+	public static String funArgsNumWrong(String funName, int gotN, int wantN) {
 		return "Attempting to call procedure " + funName + " with " + gotN + " argument" + (gotN != 1 ? "s" : "") + " but it requires " + wantN + " parameter" + (wantN != 1 ? "s" : "") + ".";
 	}
 
-	public static String funArgsTypeWrong(String funName, List<String> gotTypes, List<String> wantTypes){
+	public static String funArgsTypeWrong(String funName, List<String> gotTypes, List<String> wantTypes) {
 		StringBuilder msg = new StringBuilder("Attempting to call procedure " + funName + " with argument");
 		if (gotTypes.size() > 1) msg.append("s");
 		msg.append(" of type");
-		for (String g : gotTypes){
+		for (String g : gotTypes) {
 			msg.append(" ").append(g).append(",");
 		}
 		msg.delete(msg.length() - 1, msg.length());
 		msg.append(" but it requires parameter");
 		if (wantTypes.size() > 1) msg.append("s");
 		msg.append(" of type");
-		for (String w : wantTypes){
+		for (String w : wantTypes) {
 			msg.append(" ").append(w).append(",");
 		}
 		msg.replace(msg.length() - 1, msg.length(), ".");
 		return msg.toString();
 	}
 
-	public static String funParAlreadyExist(String funName, String paramName){
+	public static String funParAlreadyExist(String funName, String paramName) {
 		return "Procedure " + funName + " already has a parameter variable with name " + paramName + ".";
 	}
 
-	public static String funParAlreadyVar(String paramName, int declaredLine){
+	public static String funParAlreadyVar(String paramName, int declaredLine) {
 		return "Name for parameter variable '" + paramName + "' is already used for a variable at line " + declaredLine + ".";
 	}
 
-	public static String funParTypeUnk(String paramType, String paramName){
+	public static String funParTypeUnk(String paramType, String paramName) {
 		return "Unable to recognize type " + paramType + " of parameter variable " + paramName + ".";
 	}
 
 	public static String funResNotVoid(String typeString) {
-		String nothing = simpleLexer.VOCABULARY.getLiteralName(simpleParser.NULL).replace("'", "");
-		return "Attempting to use as instruction a procedure call that produces a value of type " + typeString + " instead of " + nothing + ".";
+		return "Attempting to use as instruction a procedure call that produces a value of type " + typeString + " instead of Nothing.";
 	}
 
-	public static String funResTypeUnk(String resType, String funName){
+	public static String funResTypeUnk(String resType, String funName) {
 		return "Unable to recognize result type " + resType + " of procedure " + funName + ".";
 	}
 
@@ -132,12 +131,12 @@ class errorMsg {
 		return "Procedure '" + funName + "' is undefined." + didYouMean(suggestions);
 	}
 
-	public static String funUnused(String funName, int definedLine){
+	public static String funUnused(String funName, int definedLine) {
 		return "Procedure " + funName + " defined at line " + definedLine + " but never used.";
 	}
 
-	public static String invalidCounterUse(){
-		return "Attempting to use " + simpleLexer.VOCABULARY.getLiteralName(simpleParser.COUNTER) + " outside of any loop.";
+	public static String invalidCounterUse() {
+		return "Attempting to use Counter outside of any loop.";
 	}
 
 	public static String invalidSizeOf(String varType) {
@@ -173,8 +172,7 @@ class errorMsg {
 	}
 
 	public static String mainParStruct(String paramName, String paramType) {
-		String mainFunc = simpleLexer.VOCABULARY.getLiteralName(simpleParser.MAIN).replace("'", "");
-		return "Attempting to define " + mainFunc + " with structured parameter " + paramName + " of type " + paramType + ".";
+		return "Attempting to define Main with structured parameter " + paramName + " of type " + paramType + ".";
 	}
 
 	public static String mergeNotFromTextList(String typeString) {
@@ -193,11 +191,11 @@ class errorMsg {
 		return "Unable to recognize type of operand " + operandString + ".";
 	}
 
-	public static String retTypeWrong(String gotType, String funName, String wantType){
+	public static String retTypeWrong(String gotType, String funName, String wantType) {
 		return "Attempting to return value of mismatched type " + gotType + " but procedure " + funName + " should return " + wantType + ".";
 	}
 
-	public static String retTypeUnk(String valueString){
+	public static String retTypeUnk(String valueString) {
 		return "Unable to recognize type of returned value " + valueString + ".";
 	}
 
@@ -217,7 +215,7 @@ class errorMsg {
 		return "Unable to recognize if " + structName + " is a variable of structured type.";
 	}
 
-	public static String typeAlreadyExist(String typeName, int declaredLine){
+	public static String typeAlreadyExist(String typeName, int declaredLine) {
 		return "Type '" + typeName + "' is already defined at line " + declaredLine + ".";
 	}
 
@@ -233,19 +231,19 @@ class errorMsg {
 		return "Type '" + typeName + "' is undefined." + didYouMean(suggestions);
 	}
 
-	public static String typeUnused(String typeName, int declaredLine){
+	public static String typeUnused(String typeName, int declaredLine) {
 		return "Type " + typeName + " declared at line " + declaredLine + " but never used.";
 	}
 
-	public static String varAlreadyExist(String varName, int declaredLine){
+	public static String varAlreadyExist(String varName, int declaredLine) {
 		return "Variable " + varName + " is already declared at line " + declaredLine + ".";
 	}
 
-	public static String varInitTypeWrong(String varType, String valType){
+	public static String varInitTypeWrong(String varType, String valType) {
 		return "Attempting to initialize variable of type " + varType + " with value of mismatched type " + valType + ".";
 	}
 
-	public static String varInitTypeUnk(String valueString, String varName){
+	public static String varInitTypeUnk(String valueString, String varName) {
 		return "Unable to recognize type of initialization value " + valueString + " for variable " + varName + ".";
 	}
 
@@ -253,15 +251,15 @@ class errorMsg {
 		return "Attempting to use value of variable " + varName + " but it appears to have no value yet.";
 	}
 
-	public static String varTypeUnk(String typeString, String varName){
-		return "Unable to recognize type " + typeString + " of variable " + varName +".";
+	public static String varTypeUnk(String typeString, String varName) {
+		return "Unable to recognize type " + typeString + " of variable " + varName + ".";
 	}
 
 	public static String varUndefined(String varName, List<String> suggestions) {
 		return "Variable '" + varName + "' is undefined." + didYouMean(suggestions);
 	}
 
-	public static String varUnused(String varName){
+	public static String varUnused(String varName) {
 		return "Variable " + varName + " declared but never used.";
 	}
 
@@ -280,5 +278,4 @@ class errorMsg {
 		}
 		return null;
 	}
-
 }
