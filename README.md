@@ -20,6 +20,7 @@ for development outside of learning-level programs.
     .
     
     ├── docs
+    │   ├── dictionary.md
     │   ├── manual.md
     │   ├── setup.md
     │   └── usage.md
@@ -33,17 +34,18 @@ for development outside of learning-level programs.
     ├── LICENSE.txt
     └── README.md
 ```
-| Name                           | Details                       |
-|:-------------------------------|:------------------------------|
-| [manual.md](docs/manual.md)    | Language manual               |
-| [setup.md](docs/setup.md)      | Guide for installation        |
-| [usage.md](docs/usage.md)      | Guide for using the program   |
-| [examples](examples)           | Examples of S.I.M.P.L.E. code |
-| [SIMPLE.jar](package)          | The executable program        |
-| [simplexe.bat](package)        | Batch file for CL shortcut    |
-| [src](src)                     | Source files                  |
-| **[LICENSE.txt](LICENSE.txt)** | The project's license         |
-| [README.md](README.md)         | This file                     |
+| Name                                 | Details                       |
+|:-------------------------------------|:------------------------------|
+| [dictionary.md](docs/dictionary.md)  | Dialects dictionary           |
+| [manual.md](docs/manual.md)          | Language manual               |
+| [setup.md](docs/setup.md)            | Guide for installation        |
+| [usage.md](docs/usage.md)            | Guide for using the program   |
+| [examples](examples)                 | Examples of S.I.M.P.L.E. code |
+| [SIMPLE.jar](package)                | The executable program        |
+| [simplexe.bat](package)              | Batch file for CL shortcut    |
+| [src](src)                           | Source files                  |
+| **[LICENSE.txt](LICENSE.txt)**       | The project's license         |
+| [README.md](README.md)               | This file                     |
 
 ## Development
 More features are still being developed.
