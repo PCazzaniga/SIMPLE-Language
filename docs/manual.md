@@ -209,7 +209,7 @@ _X_ is one or more type` `[name](#Name) separated by `, `, each one called a "fi
 Kit types whose fields have different names but all corresponding types are considered equivalent types.
 
 ### Type declaration
-Syntax: `Prepare a `[type](#Type)` with name `[name](#Name)`as a new type`.  
+Syntax: `Prepare a `[type](#Type)` with name `[name](#Name)` as a new type`.  
 Names for types must always begin with `#`.
 
 ### Variable declaration
