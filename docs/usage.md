@@ -30,6 +30,7 @@ Example:
 The `simplexe` command has several options that can be entered alongside it, after the file name:
 - `--help` Prints a helper message that briefly describes the command and its options.
 - `--args` To pass anything after it as arguments for the [Main](manual.md#main) function of the program.
+- `--dialect` To specify which grammar dialect the code is written with (ENG, ESP, FRA, ITA or ALT).
 - `--execute` To execute the .simple file after its validation.
 - `--loop` To set the maximum times conditional [loops](manual.md#loop-statement) can iterate. Default is 100.
 - `--minimal` To reduce the amount of output produced by the interpreter and not by the program itself.
@@ -37,4 +38,4 @@ The `simplexe` command has several options that can be entered alongside it, aft
 
 All options have both longhand and shorthand versions, e.g. `--help` can also be used as `-h`.  
 Order of options doesn't matter except for `--args` which if present must, obviously, be last.  
-`--args`, `--loop` and `--recursion` require to be followed immediately by opportune values. 
+`--args`, `--dialect`, `--loop` and `--recursion` require to be followed immediately by opportune values. 
