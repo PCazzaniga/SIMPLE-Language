@@ -1,0 +1,132 @@
+%%This program parses s-expressions%%
+
+Prepara un (Kit di Testo ID, (Lista di #NODE) CHILDREN) di nome #NODE come un nuovo tipo.
+
+Definisci una procedura di nome Main:
+	Prepara un Testo di nome INPUT,
+	Imposta Output al valore di "Enter the s_expression: ",
+	Imposta INPUT al valore di Input,
+	Prepara un (Lista di Testo) di nome CHAR_STREAM,
+	Separa INPUT in CHAR_STREAM,
+	Prepara un Booleano di nome IS_VALID,
+	Imposta IS_VALID al valore di (Esegui procedura CHECK_PAR con CHAR_STREAM),
+	Se (non IS_VALID) allora:
+		Imposta Output al valore di "Not valid";
+	Altrimenti:
+		Imposta CHAR_STREAM al valore di (Esegui procedura CLEANUP con CHAR_STREAM),
+		Prepara un #NODE di nome ROOT,
+		Imposta ROOT al valore di (Esegui procedura PARSE con CHAR_STREAM),
+		Imposta Output al valore di "Built:\n",
+		Esegui procedura PRINT_ROOT con ROOT;
+	Ritorna Niente.
+
+Definisci una procedura di nome CHECK_PAR che produce un Booleano usando (Lista di Testo) LIST:
+	Prepara un Numero di nome SIZE con valore di dimensione di LIST,
+	Se (non ((LIST alla posizione 1 = "(") e (LIST alla posizione SIZE = ")"))) allora:
+		Ritorna Falso;
+	Prepara un Numero di nome COUNT con valore di 0,
+	Ripeti SIZE volte:
+		Se (LIST alla posizione Contatore = "(") allora:
+			Imposta COUNT al valore di (COUNT + 1);
+		Altrimenti se (LIST alla posizione Contatore = ")") allora:
+			Imposta COUNT al valore di (COUNT - 1);
+	Ritorna (COUNT = 0).
+
+Definisci una procedura di nome CLEANUP che produce un (Lista di Testo) usando (Lista di Testo) LIST:
+	Prepara un Numero di nome SIZE con valore di dimensione di LIST,
+	Prepara un Booleano di nome STRING con valore di Falso,
+	Ripeti SIZE volte:
+		Se (LIST alla posizione Contatore = "\"") allora:
+			Imposta STRING al valore di (non STRING);
+		Altrimenti se ((LIST alla posizione Contatore = " ") e (STRING = Vero)) allora:
+			Imposta LIST alla posizione Contatore al valore di "_";
+		Altrimenti se ((LIST alla posizione Contatore = "(") e (STRING = Vero)) allora:
+			Imposta LIST alla posizione Contatore al valore di "[";
+		Altrimenti se ((LIST alla posizione Contatore = ")") e (STRING = Vero)) allora:
+			Imposta LIST alla posizione Contatore al valore di "]";
+	Ritorna LIST.
+
+Definisci una procedura di nome PARSE che produce un #NODE usando (Lista di Testo) LIST:
+	Prepara un #NODE di nome NODE con valore di {"", ||},
+	Rimuovi da LIST alla posizione 1,
+	Ripeti mentre (LIST alla posizione 1 = " "):
+		Rimuovi da LIST alla posizione 1;
+	Prepara un (Lista di Testo) di nome BUILDER con valore di ||,
+	Prepara un Numero di nome APPEND,
+	Ripeti mentre (non ((LIST alla posizione 1 = " ") o ((LIST alla posizione 1 = "(") o (LIST alla posizione 1 = ")")))):
+		Imposta APPEND al valore di (dimensione di BUILDER + 1),
+		Inserisci LIST alla posizione 1 in BUILDER alla posizione APPEND,
+		Rimuovi da LIST alla posizione 1;
+	Unisci BUILDER in NODE alla posizione @ID,
+	Imposta BUILDER al valore di ||,
+	Ripeti mentre (non (LIST alla posizione 1 = ")")):
+		Se (LIST alla posizione 1 = " ") allora:
+			Rimuovi da LIST alla posizione 1;
+		Altrimenti se (LIST alla posizione 1 = "(") allora:
+			Imposta APPEND al valore di (dimensione di BUILDER + 1),
+			Inserisci LIST alla posizione 1 in BUILDER alla posizione APPEND,
+			Rimuovi da LIST alla posizione 1,
+			Prepara un Numero di nome COUNT con valore di 1,
+			Ripeti mentre (non (COUNT = 0)):
+				Imposta APPEND al valore di (dimensione di BUILDER + 1),
+				Inserisci LIST alla posizione 1 in BUILDER alla posizione APPEND,
+				Se (LIST alla posizione 1 = "(") allora:
+					Imposta COUNT al valore di (COUNT + 1);
+				Altrimenti se (LIST alla posizione 1 = ")") allora:
+					Imposta COUNT al valore di (COUNT - 1);
+				Rimuovi da LIST alla posizione 1;
+			Prepara un #NODE di nome CHILD,
+			Imposta CHILD al valore di (Esegui procedura PARSE con BUILDER),
+			Imposta BUILDER al valore di ||,
+			Prepara un (Lista di #NODE) di nome TEMP con valore di NODE alla posizione @CHILDREN,
+			Imposta APPEND al valore di (dimensione di TEMP + 1),
+			Inserisci CHILD in TEMP alla posizione APPEND,
+			Imposta NODE alla posizione @CHILDREN al valore di TEMP;
+		Altrimenti:
+			Prepara un #NODE di nome LEAF con valore di {"", ||},
+			Ripeti mentre (non ((LIST alla posizione 1 = " ") o ((LIST alla posizione 1 = "(") o (LIST alla posizione 1 = ")")))):
+				Imposta APPEND al valore di (dimensione di BUILDER + 1),
+				Inserisci LIST alla posizione 1 in BUILDER alla posizione APPEND,
+				Rimuovi da LIST alla posizione 1;
+			Unisci BUILDER in LEAF alla posizione @ID,
+			Imposta BUILDER al valore di ||,
+			Prepara un (Lista di #NODE) di nome TEMP con valore di NODE alla posizione @CHILDREN,
+			Imposta APPEND al valore di (dimensione di TEMP + 1),
+			Inserisci LEAF in TEMP alla posizione APPEND,
+			Imposta NODE alla posizione @CHILDREN al valore di TEMP;
+	Ritorna NODE.
+
+Definisci una procedura di nome PRINT_ROOT che usa un #NODE ROOT:
+	Imposta Output al valore di ROOT alla posizione @ID,
+	Prepara un (Lista di #NODE) di nome CHILDREN con valore di ROOT alla posizione @CHILDREN,
+	Se (dimensione di CHILDREN > 0) allora:
+		Prepara un Numero di nome SIZE con valore di dimensione di CHILDREN,
+		Prepara un (Lista di Testo) di nome PREFIX con valore di |"├── "|,
+		Ripeti SIZE volte:
+			Se (Contatore = SIZE) allora:
+				Imposta PREFIX alla posizione 1 al valore di "└── ";
+			Esegui procedura PRINT_NODE con CHILDREN alla posizione Contatore, PREFIX;
+	Ritorna Niente.
+
+Definisci una procedura di nome PRINT_NODE che usa un #NODE NODE, (Lista di Testo) PREFIX:
+	Imposta Output al valore di "\n",
+	Prepara un Numero di nome INDENTATION,
+	Imposta INDENTATION al valore di dimensione di PREFIX,
+	Ripeti INDENTATION volte:
+		Imposta Output al valore di PREFIX alla posizione Contatore;
+	Imposta Output al valore di NODE alla posizione @ID,
+	Prepara un (Lista di #NODE) di nome CHILDREN con valore di NODE alla posizione @CHILDREN,
+	Se (dimensione di CHILDREN > 0) allora:
+		Prepara un Numero di nome SIZE con valore di dimensione di CHILDREN,
+		Se (PREFIX alla posizione INDENTATION = "└── ") allora:
+			Imposta PREFIX alla posizione INDENTATION al valore di "    ";
+		Altrimenti:
+			Imposta PREFIX alla posizione INDENTATION al valore di "|   ";
+		Imposta INDENTATION al valore di (INDENTATION + 1),
+		Inserisci "├── " in PREFIX alla posizione INDENTATION,
+		Ripeti SIZE volte:
+			Se (Contatore = SIZE) allora:
+				Imposta PREFIX alla posizione INDENTATION al valore di "└── ";
+			Esegui procedura PRINT_NODE con CHILDREN alla posizione Contatore, PREFIX;
+	Ritorna Niente.
+

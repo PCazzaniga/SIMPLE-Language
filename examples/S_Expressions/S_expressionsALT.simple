@@ -1,0 +1,131 @@
+//This program parses s-expressions//
+
+def (struct string ID, (list __NODE) CHILDREN) $ __NODE typedef.
+
+func Main:
+	def string $ INPUT,
+	let print = "Enter the s_expression: ",
+	let INPUT = scan,
+	def (list string) $ CHAR_STREAM,
+	split INPUT in CHAR_STREAM,
+	def bool $ IS_VALID,
+	let IS_VALID = (call CHECK_PAR <<< CHAR_STREAM),
+	if (! IS_VALID) then:
+		let print = "Not valid";
+	else:
+		let CHAR_STREAM = (call CLEANUP <<< CHAR_STREAM),
+		def __NODE $ ROOT,
+		let ROOT = (call PARSE <<< CHAR_STREAM),
+		let print = "Built:\n",
+		call PRINT_ROOT <<< ROOT;
+	return null.
+
+func CHECK_PAR -> bool ;; (list string) LIST:
+	def float $ SIZE := sizeof LIST,
+	if (! ((LIST @ 1 == "(") && (LIST @ SIZE == ")"))) then:
+		return false;
+	def float $ COUNT := 0,
+	loop SIZE times:
+		if (LIST @ count == "(") then:
+			let COUNT = (COUNT + 1);
+		elif (LIST @ count == ")") then:
+			let COUNT = (COUNT - 1);
+	return (COUNT == 0).
+
+func CLEANUP -> (list string) ;; (list string) LIST:
+	def float $ SIZE := sizeof LIST,
+	def bool $ STRING := false,
+	loop SIZE times:
+		if (LIST @ count == "\"") then:
+			let STRING = (! STRING);
+		elif ((LIST @ count == " ") && (STRING == true)) then:
+			let LIST @ count = "_";
+		elif ((LIST @ count == "(") && (STRING == true)) then:
+			let LIST @ count = "[";
+		elif ((LIST @ count == ")") && (STRING == true)) then:
+			let LIST @ count = "]";
+	return LIST.
+
+func PARSE -> __NODE ;; (list string) LIST:
+	def __NODE $ NODE := {"", ^^},
+	remove LIST @ 1,
+	loop while (LIST @ 1 == " "):
+		remove LIST @ 1;
+	def (list string) $ BUILDER := ^^,
+	def float $ APPEND,
+	loop while (! ((LIST @ 1 == " ") || ((LIST @ 1 == "(") || (LIST @ 1 == ")")))):
+		let APPEND = (sizeof BUILDER + 1),
+		add LIST @ 1 in BUILDER @ APPEND,
+		remove LIST @ 1;
+	merge BUILDER in NODE @ #ID,
+	let BUILDER = ^^,
+	loop while (! (LIST @ 1 == ")")):
+		if (LIST @ 1 == " ") then:
+			remove LIST @ 1;
+		elif (LIST @ 1 == "(") then:
+			let APPEND = (sizeof BUILDER + 1),
+			add LIST @ 1 in BUILDER @ APPEND,
+			remove LIST @ 1,
+			def float $ COUNT := 1,
+			loop while (! (COUNT == 0)):
+				let APPEND = (sizeof BUILDER + 1),
+				add LIST @ 1 in BUILDER @ APPEND,
+				if (LIST @ 1 == "(") then:
+					let COUNT = (COUNT + 1);
+				elif (LIST @ 1 == ")") then:
+					let COUNT = (COUNT - 1);
+				remove LIST @ 1;
+			def __NODE $ CHILD,
+			let CHILD = (call PARSE <<< BUILDER),
+			let BUILDER = ^^,
+			def (list __NODE) $ TEMP := NODE @ #CHILDREN,
+			let APPEND = (sizeof TEMP + 1),
+			add CHILD in TEMP @ APPEND,
+			let NODE @ #CHILDREN = TEMP;
+		else:
+			def __NODE $ LEAF := {"", ^^},
+			loop while (! ((LIST @ 1 == " ") || ((LIST @ 1 == "(") || (LIST @ 1 == ")")))):
+				let APPEND = (sizeof BUILDER + 1),
+				add LIST @ 1 in BUILDER @ APPEND,
+				remove LIST @ 1;
+			merge BUILDER in LEAF @ #ID,
+			let BUILDER = ^^,
+			def (list __NODE) $ TEMP := NODE @ #CHILDREN,
+			let APPEND = (sizeof TEMP + 1),
+			add LEAF in TEMP @ APPEND,
+			let NODE @ #CHILDREN = TEMP;
+	return NODE.
+
+func PRINT_ROOT <- __NODE ROOT:
+	let print = ROOT @ #ID,
+	def (list __NODE) $ CHILDREN := ROOT @ #CHILDREN,
+	if (sizeof CHILDREN > 0) then:
+		def float $ SIZE := sizeof CHILDREN,
+		def (list string) $ PREFIX := ^"├── "^,
+		loop SIZE times:
+			if (count == SIZE) then:
+				let PREFIX @ 1 = "└── ";
+			call PRINT_NODE <<< CHILDREN @ count, PREFIX;
+	return null.
+
+func PRINT_NODE <- __NODE NODE, (list string) PREFIX:
+	let print = "\n",
+	def float $ INDENTATION,
+	let INDENTATION = sizeof PREFIX,
+	loop INDENTATION times:
+		let print = PREFIX @ count;
+	let print = NODE @ #ID,
+	def (list __NODE) $ CHILDREN := NODE @ #CHILDREN,
+	if (sizeof CHILDREN > 0) then:
+		def float $ SIZE := sizeof CHILDREN,
+		if (PREFIX @ INDENTATION == "└── ") then:
+			let PREFIX @ INDENTATION = "    ";
+		else:
+			let PREFIX @ INDENTATION = "|   ";
+		let INDENTATION = (INDENTATION + 1),
+		add "├── " in PREFIX @ INDENTATION,
+		loop SIZE times:
+			if (count == SIZE) then:
+				let PREFIX @ INDENTATION = "└── ";
+			call PRINT_NODE <<< CHILDREN @ count, PREFIX;
+	return null.

@@ -1,0 +1,34 @@
+%%This program tests whether a number is prime%%
+
+Prepara un (Lista de Número) de nombre MEMO_PRIMES con valor de |2; 3; 5; 7; 11; 13; 17; 19|.
+
+Define un procedimiento de nombre Main:
+	Establece Salida al valor de "Enter a number:\n",
+	Prepara un Número de nombre INPUT,
+	Establece INPUT al valor de Entrada,
+	Prepara un Booleano de nombre IS_PRIME,
+	Establece IS_PRIME al valor de (Ejecuta procedimiento PRIME_TEST con INPUT),
+	Establece Salida al valor de INPUT,
+	Establece Salida al valor de " is",
+	Si (no IS_PRIME) entonces:
+		Establece Salida al valor de " not";
+	Establece Salida al valor de " a prime number.\n",
+	Devuelve Nada.
+
+Define un procedimiento de nombre PRIME_TEST que produce un Booleano usando Número X:
+	Prepara un Número de nombre SIZE con valor de dimensión de MEMO_PRIMES,
+	Repite SIZE veces:
+		Si ((X mod MEMO_PRIMES en la posición Contador) = 0) entonces:
+			Devuelve Falso;
+	Prepara un Número de nombre CURR,
+	Establece CURR al valor de (MEMO_PRIMES en la posición SIZE + 1),
+	Repite mientras (no ((CURR * CURR) > X)):
+		Prepara un Booleano de nombre IS_PRIME,
+		Establece IS_PRIME al valor de (Ejecuta procedimiento PRIME_TEST con CURR),
+		Si (IS_PRIME = Verdadero) entonces:
+			Establece SIZE al valor de (SIZE + 1),
+			Inserta CURR en MEMO_PRIMES en la posición SIZE,
+			Si ((X mod CURR) = 0) entonces:
+				Devuelve Falso;
+		Establece CURR al valor de (CURR + 1);
+	Devuelve Verdadero.

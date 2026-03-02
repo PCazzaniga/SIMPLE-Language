@@ -1,0 +1,5 @@
+%%This program says "Hello, World!"%%
+
+Define un procedimiento de nombre Main:
+	Establece Salida al valor de "Hello, World!",
+	Devuelve Nada.

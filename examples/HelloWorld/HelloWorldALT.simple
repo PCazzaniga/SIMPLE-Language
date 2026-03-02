@@ -1,0 +1,5 @@
+//This program says "Hello, World!"//
+
+func Main:
+	let print = "Hello, World!",
+	return null.

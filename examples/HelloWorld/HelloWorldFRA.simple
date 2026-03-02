@@ -1,0 +1,5 @@
+%%This program says "Hello, World!"%%
+
+Définis une procédure nommée Main:
+	Fixe Sortie à la valeur de "Hello, World!",
+	Rends Rien.
