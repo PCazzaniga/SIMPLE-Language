@@ -30,6 +30,11 @@ import java.util.List;
 public class simpleInterpreter {
 	public static void main(String[] args){
 
+		if (args.length < 1) {
+			System.out.println("Invalid command line parameters");
+			System.exit(exitCodes.INVALID_COMMAND_ARGS);
+		}
+
 		List<String> argsList = new ArrayList<>(List.of(args));
 
 		String firstArg = argsList.get(0);
