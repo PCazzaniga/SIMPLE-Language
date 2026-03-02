@@ -30,6 +30,11 @@ import java.util.List;
 public class simpleInterpreter {
 	public static void main(String[] args){
 
+		if (args.length < 1) {
+			System.out.println("Invalid command line parameters");
+			System.exit(exitCodes.INVALID_COMMAND_ARGS);
+		}
+
 		List<String> argsList = new ArrayList<>(List.of(args));
 
 		String firstArg = argsList.get(0);
@@ -148,7 +153,6 @@ public class simpleInterpreter {
 						ignoreRest = true;
 						break;
 					case "-d": case "--dialect":
-						//Set the grammar dialect to expect
 						itr.remove();
 						if (itr.hasNext()) {
 							try{
@@ -253,7 +257,7 @@ public class simpleInterpreter {
 		private static void printHelp(){
 			String helpMsg =
 					"""
-					SIMPLE v1.6.0 Copyright (C) 2025 - 2026 PCazzaniga (github.com)
+					SIMPLE v1.6.1 Copyright (C) 2025 - 2026 PCazzaniga (github.com)
 					This program is distributed under the GNU General Public License Version 3
 					
 					Interpreter for the S.I.M.P.L.E. programming language, validates and optionally executes a .simple file.

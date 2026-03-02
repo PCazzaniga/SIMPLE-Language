@@ -1,0 +1,5 @@
+%%This program says "Hello, World!"%%
+
+Definisci una procedura di nome Main:
+	Imposta Output al valore di "Hello, World!",
+	Ritorna Niente.

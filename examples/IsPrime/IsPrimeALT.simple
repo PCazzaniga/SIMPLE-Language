@@ -1,0 +1,34 @@
+//This program tests whether a number is prime//
+
+def (list float) $ MEMO_PRIMES := ^2; 3; 5; 7; 11; 13; 17; 19^.
+
+func Main:
+	let print = "Enter a number:\n",
+	def float $ INPUT,
+	let INPUT = scan,
+	def bool $ IS_PRIME,
+	let IS_PRIME = (call PRIME_TEST <<< INPUT),
+	let print = INPUT,
+	let print = " is",
+	if (! IS_PRIME) then:
+		let print = " not";
+	let print = " a prime number.\n",
+	return null.
+
+func PRIME_TEST -> bool ;; float X:
+	def float $ SIZE := sizeof MEMO_PRIMES,
+	loop SIZE times:
+		if ((X % MEMO_PRIMES @ count) == 0) then:
+			return false;
+	def float $ CURR,
+	let CURR = (MEMO_PRIMES @ SIZE + 1),
+	loop while (! ((CURR * CURR) > X)):
+		def bool $ IS_PRIME,
+		let IS_PRIME = (call PRIME_TEST <<< CURR),
+		if (IS_PRIME == true) then:
+			let SIZE = (SIZE + 1),
+			add CURR in MEMO_PRIMES @ SIZE,
+			if ((X % CURR) == 0) then:
+				return false;
+		let CURR = (CURR + 1);
+	return true.
